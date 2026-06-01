@@ -1,30 +1,48 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { NButton, NEmpty, NInput, NTag, NText } from 'naive-ui'
-import { categories, featuredTools, tools } from '@/config/toolCatalog'
-import type { ToolCategoryId, ToolItem } from '@/types/tools'
+import { categories, tools } from '@/config/toolCatalog'
+import { getLocalizedText } from '@/i18n/locales'
+import type { SupportedLocale } from '@/i18n/locales'
+import type { ToolItem } from '@/types/tools'
 
 const router = useRouter()
+const { t, locale } = useI18n()
 const query = ref('')
-const selectedCategory = ref<ToolCategoryId | 'all'>('all')
 
-const categoryOptions = computed(() => [
-  { id: 'all' as const, name: 'All' },
-  ...categories.filter((category) => tools.some((tool) => tool.categoryId === category.id)),
-])
-
+const currentLocale = computed(() => locale.value as SupportedLocale)
 const normalizedQuery = computed(() => query.value.trim().toLowerCase())
 
-const filteredTools = computed(() => {
-  return tools.filter((tool) => {
-    const matchesCategory =
-      selectedCategory.value === 'all' || tool.categoryId === selectedCategory.value
-    const haystack = [tool.name, tool.description, ...tool.tags].join(' ').toLowerCase()
-    const matchesQuery = !normalizedQuery.value || haystack.includes(normalizedQuery.value)
-    return matchesCategory && matchesQuery
-  })
-})
+function label(text: ToolItem['name']) {
+  return getLocalizedText(text, currentLocale.value)
+}
+
+function matchesQuery(tool: ToolItem) {
+  if (!normalizedQuery.value) return true
+  const haystack = [
+    label(tool.name),
+    label(tool.description),
+    ...tool.tags,
+  ]
+    .join(' ')
+    .toLowerCase()
+  return haystack.includes(normalizedQuery.value)
+}
+
+const groupedTools = computed(() =>
+  categories
+    .map((category) => ({
+      category,
+      tools: tools.filter((tool) => tool.categoryId === category.id && matchesQuery(tool)),
+    }))
+    .filter((group) => group.tools.length > 0),
+)
+
+const totalMatches = computed(() =>
+  groupedTools.value.reduce((sum, group) => sum + group.tools.length, 0),
+)
 
 function openTool(tool: ToolItem) {
   if (tool.kind === 'internal') {
@@ -33,98 +51,79 @@ function openTool(tool: ToolItem) {
   }
   window.open(tool.url, '_blank', 'noreferrer')
 }
-
-function categoryName(id: ToolCategoryId) {
-  return categories.find((category) => category.id === id)?.name ?? id
-}
 </script>
 
 <template>
   <main class="tool-home">
     <section class="tool-home__intro" aria-labelledby="home-title">
-      <div>
-        <p class="eyebrow">Local-first tool directory</p>
-        <h1 id="home-title">Only Tools Web</h1>
-        <p class="intro-copy">
-          Search internal utilities and safe public links from one quiet workspace.
-        </p>
-      </div>
-      <div class="intro-meta">
-        <strong>{{ tools.length }}</strong>
-        <span>available tools</span>
+      <p class="eyebrow">{{ t('home.eyebrow') }}</p>
+      <div class="intro-row">
+        <div>
+          <h1 id="home-title">{{ t('home.title') }}</h1>
+          <p class="intro-copy">{{ t('home.description') }}</p>
+        </div>
+        <div class="intro-meta">
+          <strong>{{ totalMatches }}</strong>
+          <span>{{ t('home.matchCount', { count: totalMatches }) }}</span>
+        </div>
       </div>
     </section>
 
-    <section class="tool-home__controls" aria-label="Tool filters">
+    <section class="tool-home__controls" aria-label="Tool search">
       <n-input
         v-model:value="query"
         clearable
-        placeholder="Search by name, tag, or description"
+        :placeholder="t('home.search')"
         size="large"
       />
-      <div class="category-strip">
-        <button
-          v-for="category in categoryOptions"
-          :key="category.id"
-          class="category-button"
-          :class="{ 'category-button--active': selectedCategory === category.id }"
-          type="button"
-          @click="selectedCategory = category.id"
-        >
-          {{ category.name }}
-        </button>
-      </div>
-    </section>
-
-    <section v-if="featuredTools.length > 0" class="tool-section" aria-labelledby="featured-title">
-      <div class="section-heading">
-        <h2 id="featured-title">Featured</h2>
-        <n-text depth="3">Pinned internal tools for repeated use.</n-text>
-      </div>
-      <div class="tool-list">
-        <button
-          v-for="tool in featuredTools"
-          :key="tool.id"
-          class="tool-row tool-row--featured"
-          type="button"
-          @click="openTool(tool)"
-        >
-          <span>
-            <strong>{{ tool.name }}</strong>
-            <small>{{ tool.description }}</small>
-          </span>
-          <n-tag size="small" :bordered="false">{{ categoryName(tool.categoryId) }}</n-tag>
-        </button>
-      </div>
     </section>
 
     <section class="tool-section" aria-labelledby="all-tools-title">
       <div class="section-heading">
-        <h2 id="all-tools-title">All Tools</h2>
-        <n-text depth="3">{{ filteredTools.length }} matching tools</n-text>
+        <h2 id="all-tools-title">{{ t('home.allTools') }}</h2>
+        <n-text depth="3">{{ t('home.matchCount', { count: totalMatches }) }}</n-text>
       </div>
 
-      <div v-if="filteredTools.length > 0" class="tool-list">
-        <article v-for="tool in filteredTools" :key="tool.id" class="tool-row">
-          <div>
-            <div class="tool-row__title">
-              <strong>{{ tool.name }}</strong>
-              <n-tag size="small" :bordered="false">
-                {{ tool.kind === 'external' ? 'External' : 'Internal' }}
-              </n-tag>
+      <div v-if="groupedTools.length > 0" class="category-list">
+        <section
+          v-for="group in groupedTools"
+          :key="group.category.id"
+          class="category-group"
+          :aria-labelledby="`category-${group.category.id}`"
+        >
+          <header class="category-group__header">
+            <div>
+              <h3 :id="`category-${group.category.id}`">
+                {{ getLocalizedText(group.category.name, currentLocale) }}
+              </h3>
+              <p>{{ getLocalizedText(group.category.description, currentLocale) }}</p>
             </div>
-            <p>{{ tool.description }}</p>
-            <div class="tag-list">
-              <span v-for="tag in tool.tags" :key="tag">#{{ tag }}</span>
-            </div>
+            <n-tag size="small" :bordered="false">{{ group.tools.length }}</n-tag>
+          </header>
+
+          <div class="tool-list">
+            <article v-for="tool in group.tools" :key="tool.id" class="tool-row">
+              <button class="tool-row__main" type="button" @click="openTool(tool)">
+                <span>
+                  <strong>{{ label(tool.name) }}</strong>
+                  <small>{{ label(tool.description) }}</small>
+                </span>
+                <n-tag size="small" :bordered="false">
+                  {{ tool.kind === 'external' ? t('home.external') : t('home.internal') }}
+                </n-tag>
+              </button>
+              <div class="tag-list">
+                <span v-for="tag in tool.tags" :key="tag">#{{ tag }}</span>
+              </div>
+              <n-button secondary @click="openTool(tool)">
+                {{ tool.kind === 'external' ? t('home.open') : t('home.launch') }}
+              </n-button>
+            </article>
           </div>
-          <n-button secondary @click="openTool(tool)">
-            {{ tool.kind === 'external' ? 'Open' : 'Launch' }}
-          </n-button>
-        </article>
+        </section>
       </div>
 
-      <n-empty v-else description="No tools match the current filters." />
+      <n-empty v-else :description="t('home.noTools')" />
     </section>
   </main>
 </template>
@@ -136,12 +135,15 @@ function categoryName(id: ToolCategoryId) {
 }
 
 .tool-home__intro {
+  padding-bottom: 26px;
+  border-bottom: 1px solid #e3e6ea;
+}
+
+.intro-row {
   display: flex;
   align-items: end;
   justify-content: space-between;
   gap: 24px;
-  padding-bottom: 28px;
-  border-bottom: 1px solid #e3e6ea;
 }
 
 .eyebrow {
@@ -155,6 +157,7 @@ function categoryName(id: ToolCategoryId) {
 
 h1,
 h2,
+h3,
 p {
   margin: 0;
 }
@@ -168,8 +171,12 @@ h2 {
   font-size: 18px;
 }
 
+h3 {
+  font-size: 16px;
+}
+
 .intro-copy {
-  max-width: 540px;
+  max-width: 560px;
   margin-top: 14px;
   color: #626973;
   font-size: 16px;
@@ -189,50 +196,36 @@ h2 {
   line-height: 1;
 }
 
-.intro-meta span {
+.intro-meta span,
+.category-group__header p {
   color: #626973;
   font-size: 13px;
 }
 
 .tool-home__controls {
-  display: grid;
-  gap: 14px;
   margin: 28px 0 32px;
 }
 
-.category-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.category-button {
-  border: 1px solid #d7dce2;
-  border-radius: 999px;
-  background: #ffffff;
-  color: #39404a;
-  cursor: pointer;
-  font: inherit;
-  font-size: 13px;
-  padding: 7px 12px;
-}
-
-.category-button--active {
-  border-color: #1f7a5a;
-  background: #e9f4ef;
-  color: #155940;
-}
-
-.tool-section {
-  margin-top: 30px;
-}
-
-.section-heading {
+.section-heading,
+.category-group__header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 12px;
+}
+
+.section-heading {
+  margin-bottom: 18px;
+}
+
+.category-list {
+  display: grid;
+  gap: 30px;
+}
+
+.category-group {
+  display: grid;
+  gap: 12px;
 }
 
 .tool-list {
@@ -241,59 +234,55 @@ h2 {
 }
 
 .tool-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(100px, auto) auto;
+  align-items: center;
+  gap: 20px;
+  min-height: 86px;
+  padding: 18px 0;
+  border-bottom: 1px solid #e3e6ea;
+}
+
+.tool-row__main {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  width: 100%;
-  min-height: 86px;
-  padding: 18px 0;
+  gap: 16px;
+  min-width: 0;
   border: 0;
-  border-bottom: 1px solid #e3e6ea;
   background: transparent;
   color: inherit;
-  text-align: left;
-}
-
-button.tool-row {
   cursor: pointer;
-}
-
-.tool-row--featured {
-  min-height: 72px;
+  font: inherit;
+  padding: 0;
+  text-align: left;
 }
 
 .tool-row strong {
   font-size: 16px;
 }
 
-.tool-row small,
-.tool-row p {
+.tool-row small {
   display: block;
   margin-top: 6px;
   color: #626973;
   font-size: 13px;
 }
 
-.tool-row__title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .tag-list {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 10px;
   color: #7a828c;
   font-size: 12px;
 }
 
-@media (max-width: 720px) {
-  .tool-home__intro,
+@media (max-width: 760px) {
+  .intro-row,
   .section-heading,
-  .tool-row {
+  .category-group__header,
+  .tool-row,
+  .tool-row__main {
     align-items: stretch;
     flex-direction: column;
   }
@@ -301,6 +290,10 @@ button.tool-row {
   .intro-meta {
     min-width: 0;
     text-align: left;
+  }
+
+  .tool-row {
+    display: flex;
   }
 }
 </style>

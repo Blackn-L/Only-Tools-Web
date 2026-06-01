@@ -1,26 +1,25 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { NAlert } from 'naive-ui'
 import AddKeyForm from './components/AddKeyForm.vue'
 import ControlBar from './components/ControlBar.vue'
 import StatsBar from './components/StatsBar.vue'
 import FilterBar from './components/FilterBar.vue'
 import KeyTable from './components/KeyTable.vue'
+
+const { t } = useI18n()
 </script>
 
 <template>
   <main class="key-probe">
     <header class="key-probe__header">
-      <p class="eyebrow">Internal tool</p>
-      <h1>API Key Tester</h1>
-      <p>
-        Test OpenAI-compatible chat completions endpoints without sending keys to
-        any service except the endpoint you configure.
-      </p>
+      <p class="eyebrow">{{ t('keyTester.eyebrow') }}</p>
+      <h1>{{ t('keyTester.title') }}</h1>
+      <p>{{ t('keyTester.description') }}</p>
     </header>
 
     <n-alert class="privacy-note" type="info" :bordered="false">
-      Keys stay in this browser session by default. Enable local persistence only
-      on a trusted device.
+      {{ t('keyTester.privacy') }}
     </n-alert>
 
     <section class="tool-surface">

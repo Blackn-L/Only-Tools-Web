@@ -1,116 +1,60 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { RouterView, useRoute, useRouter } from 'vue-router'
-import {
-  NButton,
-  NDrawer,
-  NDrawerContent,
-  NLayout,
-  NLayoutContent,
-  NLayoutHeader,
-  NLayoutSider,
-  NMenu,
-  NText,
-} from 'naive-ui'
-import type { MenuOption } from 'naive-ui'
-import { categories, tools } from '@/config/toolCatalog'
-import type { ToolItem } from '@/types/tools'
+import { computed } from 'vue'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { NButton, NLayout, NLayoutContent, NLayoutHeader, NSelect, NText } from 'naive-ui'
+import { localeOptions, saveLocale } from '@/i18n/locales'
+import type { SupportedLocale } from '@/i18n/locales'
 
 const route = useRoute()
 const router = useRouter()
-const showDrawer = ref(false)
+const { t, locale } = useI18n()
 
-const categoryMap = new Map(categories.map((category) => [category.id, category.name]))
+const isHome = computed(() => route.path === '/')
+const currentLocale = computed({
+  get: () => locale.value as SupportedLocale,
+  set: (value: SupportedLocale) => {
+    locale.value = value
+    saveLocale(value)
+  },
+})
 
-function menuKey(tool: ToolItem) {
-  return tool.kind === 'internal' ? tool.path : tool.url
-}
-
-const menuOptions = computed<MenuOption[]>(() =>
-  categories
-    .map((category) => {
-      const children = tools
-        .filter((tool) => tool.categoryId === category.id)
-        .map((tool) => ({
-          key: menuKey(tool),
-          label: `${tool.name}${tool.kind === 'external' ? ' ↗' : ''}`,
-        }))
-
-      return {
-        key: category.id,
-        label: categoryMap.get(category.id) ?? category.name,
-        children,
-      }
-    })
-    .filter((option) => option.children.length > 0),
-)
-
-const activeKey = computed(() => route.path)
-
-function handleMenuSelect(key: string) {
-  const tool = tools.find((item) => menuKey(item) === key)
-  if (!tool) return
-
-  showDrawer.value = false
-  if (tool.kind === 'internal') {
-    router.push(tool.path)
-    return
-  }
-  window.open(tool.url, '_blank', 'noreferrer')
+function goHome() {
+  router.push('/')
 }
 </script>
 
 <template>
   <n-layout class="app-shell">
-    <n-layout-sider
-      class="app-shell__sider"
-      :native-scrollbar="false"
-      bordered
-      collapse-mode="width"
-      :width="248"
-    >
-      <RouterLink class="brand" to="/">
-        <span class="brand__mark">O</span>
-        <span>
-          <strong>Only Tools Web</strong>
-          <small>Personal tool navigator</small>
-        </span>
-      </RouterLink>
-      <n-menu
-        :value="activeKey"
-        :options="menuOptions"
-        @update:value="handleMenuSelect"
-      />
-    </n-layout-sider>
-
-    <n-layout>
-      <n-layout-header class="app-shell__header" bordered>
-        <RouterLink class="brand brand--compact" to="/">
-          <span class="brand__mark">O</span>
-          <strong>Only Tools Web</strong>
-        </RouterLink>
-        <n-text depth="3" class="app-shell__status">
-          {{ tools.length }} tools · local-first
-        </n-text>
-        <n-button class="app-shell__menu-button" secondary @click="showDrawer = true">
-          Menu
+    <n-layout-header class="app-shell__header" bordered>
+      <div class="app-shell__left">
+        <n-button v-if="!isHome" secondary class="back-button" @click="goHome">
+          {{ t('app.back') }}
         </n-button>
-      </n-layout-header>
+        <RouterLink class="brand" to="/">
+          <span class="brand__mark">O</span>
+          <span>
+            <strong>Only Tools Web</strong>
+            <small>{{ t('app.subtitle') }}</small>
+          </span>
+        </RouterLink>
+      </div>
 
-      <n-layout-content class="app-shell__content">
-        <RouterView />
-      </n-layout-content>
-    </n-layout>
-
-    <n-drawer v-model:show="showDrawer" placement="left" :width="300">
-      <n-drawer-content title="Only Tools Web">
-        <n-menu
-          :value="activeKey"
-          :options="menuOptions"
-          @update:value="handleMenuSelect"
+      <div class="app-shell__right">
+        <n-text depth="3" class="app-shell__status">{{ t('app.localFirst') }}</n-text>
+        <n-select
+          v-model:value="currentLocale"
+          class="locale-select"
+          :options="localeOptions"
+          size="small"
+          :aria-label="t('app.language')"
         />
-      </n-drawer-content>
-    </n-drawer>
+      </div>
+    </n-layout-header>
+
+    <n-layout-content class="app-shell__content">
+      <RouterView />
+    </n-layout-content>
   </n-layout>
 </template>
 
@@ -120,53 +64,44 @@ function handleMenuSelect(key: string) {
   background: #f6f7f9;
 }
 
-.app-shell__sider {
-  display: block;
-  background: #ffffff;
-}
-
 .app-shell__header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  height: 64px;
-  padding: 0 24px;
-  background: rgba(255, 255, 255, 0.92);
+  justify-content: space-between;
+  gap: 18px;
+  height: 68px;
+  padding: 0 28px;
+  background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(12px);
 }
 
+.app-shell__left,
+.app-shell__right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
 .app-shell__content {
-  min-height: calc(100vh - 64px);
-  padding: 32px;
-}
-
-.app-shell__status {
-  margin-left: auto;
-  font-size: 13px;
-}
-
-.app-shell__menu-button {
-  display: none;
+  min-height: calc(100vh - 68px);
+  padding: 34px 32px;
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 22px 20px;
+  min-width: 0;
   color: inherit;
   text-decoration: none;
-}
-
-.brand--compact {
-  display: none;
-  padding: 0;
 }
 
 .brand__mark {
   display: grid;
   width: 34px;
   height: 34px;
+  flex: 0 0 auto;
   place-items: center;
   border: 1px solid #1f7a5a;
   border-radius: 8px;
@@ -181,22 +116,35 @@ function handleMenuSelect(key: string) {
   font-size: 12px;
 }
 
-@media (max-width: 860px) {
-  .app-shell__sider {
-    display: none;
+.app-shell__status {
+  font-size: 13px;
+}
+
+.locale-select {
+  width: 128px;
+}
+
+@media (max-width: 700px) {
+  .app-shell__header {
+    height: auto;
+    min-height: 68px;
+    align-items: stretch;
+    flex-direction: column;
+    padding: 14px 18px;
+  }
+
+  .app-shell__left,
+  .app-shell__right {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .app-shell__content {
-    padding: 20px;
+    padding: 22px 18px;
   }
 
-  .brand--compact,
-  .app-shell__menu-button {
-    display: flex;
-  }
-
-  .app-shell__status {
-    display: none;
+  .back-button {
+    flex: 0 0 auto;
   }
 }
 </style>

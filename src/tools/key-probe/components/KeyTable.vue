@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { h } from 'vue'
+import { computed, h } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { NButton, NDataTable, NTag, NText, useMessage } from 'naive-ui'
 import type { DataTableColumns } from 'naive-ui'
 import { formatMs, truncateKey } from '../lib/format'
@@ -8,35 +9,35 @@ import { useKeyStore } from '../stores/useKeyStore'
 
 const store = useKeyStore()
 const message = useMessage()
+const { t } = useI18n()
 
-const statusMap: Record<KeyStatus, { label: string; type: 'success' | 'error' | 'warning' | 'default' }> = {
-  idle: { label: 'Idle', type: 'default' },
-  testing: { label: 'Testing', type: 'warning' },
-  success: { label: 'Available', type: 'success' },
-  error: { label: 'Failed', type: 'error' },
+const statusType: Record<KeyStatus, 'success' | 'error' | 'warning' | 'default'> = {
+  idle: 'default',
+  testing: 'warning',
+  success: 'success',
+  error: 'error',
 }
 
-const errorLabel: Record<KeyError, string> = {
-  invalid_key: 'Invalid key',
-  forbidden: 'Forbidden',
-  rate_limit: 'Rate limited',
-  timeout: 'Timeout',
-  network: 'Network error',
-  unknown: 'Unknown error',
+function statusLabel(status: KeyStatus) {
+  return t(`keyTester.status.${status}`)
+}
+
+function errorText(error: KeyError) {
+  return t(`keyTester.errors.${error}`)
 }
 
 function handleCopyKey(key: string) {
   navigator.clipboard.writeText(key)
-  message.success('Key copied to clipboard.')
+  message.success(t('keyTester.copied'))
 }
 
 function handleRemove(item: KeyItem) {
-  if (window.confirm(`Remove this key?\n${truncateKey(item.key)}`)) {
+  if (window.confirm(`${t('keyTester.removeConfirm')}\n${truncateKey(item.key)}`)) {
     store.removeKey(item.id)
   }
 }
 
-const columns: DataTableColumns<KeyItem> = [
+const columns = computed<DataTableColumns<KeyItem>>(() => [
   {
     title: '#',
     key: 'index',
@@ -44,7 +45,7 @@ const columns: DataTableColumns<KeyItem> = [
     render: (_, i) => h('span', { style: 'color: var(--n-text-color-3)' }, String(i + 1)),
   },
   {
-    title: 'Key',
+    title: t('keyTester.table.key'),
     key: 'key',
     ellipsis: { tooltip: true },
     render: (row) =>
@@ -52,69 +53,71 @@ const columns: DataTableColumns<KeyItem> = [
         'button',
         {
           class: 'copy-key-button',
-          title: 'Copy key',
+          title: t('keyTester.table.copyKey'),
           onClick: () => handleCopyKey(row.key),
         },
         truncateKey(row.key),
       ),
   },
   {
-    title: 'Endpoint',
+    title: t('keyTester.table.endpoint'),
     key: 'baseUrl',
     ellipsis: { tooltip: true },
     render: (row) => h('span', { style: 'font-family: monospace' }, row.baseUrl),
   },
   {
-    title: 'Model',
+    title: t('keyTester.table.model'),
     key: 'model',
     ellipsis: { tooltip: true },
     render: (row) => h('span', { style: 'font-family: monospace' }, row.model),
   },
   {
-    title: 'Note',
+    title: t('keyTester.table.note'),
     key: 'note',
     ellipsis: { tooltip: true },
     render: (row) => h('span', { style: 'color: var(--n-text-color-3)' }, row.note || '-'),
   },
   {
-    title: 'Status',
+    title: t('keyTester.table.status'),
     key: 'status',
     width: 110,
-    render: (row) => {
-      const { label, type } = statusMap[row.status]
-      return h(NTag, { type, size: 'small', bordered: false }, { default: () => label })
-    },
+    render: (row) =>
+      h(
+        NTag,
+        { type: statusType[row.status], size: 'small', bordered: false },
+        { default: () => statusLabel(row.status) },
+      ),
   },
   {
-    title: 'Latency',
+    title: t('keyTester.table.latency'),
     key: 'latency',
     width: 110,
     align: 'right',
     render: (row) => h('span', { style: 'font-family: monospace' }, formatMs(row.latency)),
   },
   {
-    title: 'First token',
+    title: t('keyTester.table.firstToken'),
     key: 'firstTokenLatency',
     width: 120,
     align: 'right',
     render: (row) => h('span', { style: 'font-family: monospace' }, formatMs(row.firstTokenLatency)),
   },
   {
-    title: 'Chunks',
+    title: t('keyTester.table.chunks'),
     key: 'tokens',
     width: 80,
     align: 'right',
     render: (row) => h('span', { style: 'font-family: monospace' }, row.tokens ?? '-'),
   },
   {
-    title: 'Error',
+    title: t('keyTester.table.error'),
     key: 'error',
     width: 130,
     render: (row) =>
-      h('span', { style: 'color: var(--n-error-color)' }, row.error ? errorLabel[row.error] : ''),
+      h('span', { style: 'color: var(--n-error-color)' }, row.error ? errorText(row.error) : ''),
   },
   {
-    title: 'Actions',
+    title: t('keyTester.table.actions'),
     key: 'actions',
     width: 150,
     align: 'right',
@@ -128,7 +131,7 @@ const columns: DataTableColumns<KeyItem> = [
             disabled: row.status === 'testing',
             onClick: () => store.testOne(row),
           },
-          { default: () => (row.status === 'testing' ? '...' : 'Test') },
+          { default: () => (row.status === 'testing' ? '...' : t('keyTester.actions.test')) },
         ),
         h(
           NButton,
@@ -139,11 +142,11 @@ const columns: DataTableColumns<KeyItem> = [
             disabled: row.status === 'testing',
             onClick: () => handleRemove(row),
           },
-          { default: () => 'Delete' },
+          { default: () => t('keyTester.actions.delete') },
         ),
       ]),
   },
-]
+])
 </script>
 
 <template>
@@ -157,7 +160,7 @@ const columns: DataTableColumns<KeyItem> = [
     :row-key="(row: KeyItem) => row.id"
   />
   <n-text v-else depth="3" class="empty-state">
-    Add a key, endpoint, and model to start testing.
+    {{ t('keyTester.table.empty') }}
   </n-text>
 </template>
 

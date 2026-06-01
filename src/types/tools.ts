@@ -1,20 +1,21 @@
+import type { LocalizedText } from '@/i18n/locales'
+
 export type ToolKind = 'internal' | 'external'
 
-export type ToolCategoryId = 'ai' | 'dev' | 'productivity' | 'local'
+export type ToolCategoryId = 'ai' | 'productivity' | 'local'
 
 export type ToolCategory = {
   id: ToolCategoryId
-  name: string
-  description: string
+  name: LocalizedText
+  description: LocalizedText
 }
 
 type ToolBase = {
   id: string
-  name: string
-  description: string
+  name: LocalizedText
+  description: LocalizedText
   categoryId: ToolCategoryId
   tags: string[]
-  featured?: boolean
   enabled?: boolean
 }
 

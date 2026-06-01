@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { NButton, NCheckbox, NInputNumber, NText } from 'naive-ui'
 import { useKeyStore } from '../stores/useKeyStore'
 
 const store = useKeyStore()
+const { t } = useI18n()
 
 function handleReset() {
-  if (window.confirm('Clear all keys and local key tester data?')) {
+  if (window.confirm(t('keyTester.clearConfirm'))) {
     store.reset()
   }
 }
@@ -19,25 +21,29 @@ function handleReset() {
         :disabled="store.isRunning || store.keyList.length === 0"
         @click="store.testAll"
       >
-        {{ store.isRunning ? 'Testing...' : `Test all (${store.keyList.length})` }}
+        {{
+          store.isRunning
+            ? t('keyTester.actions.testing')
+            : t('keyTester.actions.testAll', { count: store.keyList.length })
+        }}
       </n-button>
       <n-button
         :disabled="store.isRunning || store.failedKeys.length === 0"
         @click="store.testFailed"
       >
-        Retry failed
+        {{ t('keyTester.actions.retryFailed') }}
       </n-button>
       <n-button type="error" :disabled="store.isRunning" @click="handleReset">
-        Clear
+        {{ t('keyTester.actions.clear') }}
       </n-button>
     </div>
 
     <div class="control-bar__settings">
       <n-checkbox v-model:checked="store.rememberKeys" :disabled="store.isRunning">
-        Remember locally
+        {{ t('keyTester.actions.remember') }}
       </n-checkbox>
       <label class="concurrency">
-        <n-text depth="3">Concurrency</n-text>
+        <n-text depth="3">{{ t('keyTester.stats.concurrency') }}</n-text>
         <n-input-number
           v-model:value="store.concurrency"
           :min="1"

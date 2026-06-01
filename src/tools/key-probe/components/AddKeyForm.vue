@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { NButton, NInput, useMessage } from 'naive-ui'
 import { useKeyStore } from '../stores/useKeyStore'
 
 const store = useKeyStore()
 const message = useMessage()
+const { t } = useI18n()
 
 const key = ref('')
 const note = ref('')
@@ -17,19 +19,19 @@ function handleAdd() {
   const trimmedModel = model.value.trim()
 
   if (!trimmedKey) {
-    message.warning('Please enter an API key.')
+    message.warning(t('keyTester.warnings.key'))
     return
   }
   if (!trimmedBaseUrl) {
-    message.warning('Please enter a Base URL.')
+    message.warning(t('keyTester.warnings.baseUrl'))
     return
   }
   if (!trimmedModel) {
-    message.warning('Please enter a model name.')
+    message.warning(t('keyTester.warnings.model'))
     return
   }
   if (store.keyList.some((item) => item.key === trimmedKey && item.baseUrl === trimmedBaseUrl)) {
-    message.error('This key and endpoint already exist.')
+    message.error(t('keyTester.warnings.duplicate'))
     return
   }
 
@@ -50,28 +52,28 @@ function handleKeyDown(e: KeyboardEvent) {
   <form class="add-key-form" @submit.prevent="handleAdd">
     <n-input
       v-model:value="key"
-      placeholder="API key"
+      :placeholder="t('keyTester.apiKey')"
       type="password"
       show-password-on="click"
       @keydown="handleKeyDown"
     />
     <n-input
       v-model:value="baseUrl"
-      placeholder="Base URL, for example https://api.example.com"
+      :placeholder="t('keyTester.baseUrl')"
       @keydown="handleKeyDown"
     />
     <n-input
       v-model:value="model"
-      placeholder="Model name"
+      :placeholder="t('keyTester.model')"
       @keydown="handleKeyDown"
     />
     <n-input
       v-model:value="note"
-      placeholder="Note"
+      :placeholder="t('keyTester.note')"
       @keydown="handleKeyDown"
     />
     <n-button attr-type="submit" type="primary" :disabled="!key.trim()">
-      Add
+      {{ t('keyTester.add') }}
     </n-button>
   </form>
 </template>
