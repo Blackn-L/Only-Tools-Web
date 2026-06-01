@@ -7,12 +7,15 @@ Thanks for helping improve Only Tools Web.
 ## Setup
 
 ```bash
-npm install
-npm run dev
-npm run build
+pnpm install
+pnpm run dev
+pnpm run build
 ```
 
-This project does not currently maintain automated tests. Run `npm run build`
+This project uses pnpm as its only package manager. Do not commit
+`package-lock.json` or `yarn.lock`.
+
+This project does not currently maintain automated tests. Run `pnpm run build`
 before committing changes.
 
 ## Pull Request Checklist
@@ -21,7 +24,7 @@ before committing changes.
 - Do not commit API keys, tokens, private URLs, internal hostnames, or personal local catalog files.
 - Put personal-only tools in `src/config/toolCatalog.local.ts`.
 - Keep catalog names and descriptions bilingual.
-- Run `npm run build` before opening a pull request.
+- Run `pnpm run build` before opening a pull request.
 - Keep UI copy concise and utility-focused.
 
 ## Adding Tools
@@ -46,12 +49,14 @@ Tool names and descriptions use this shape:
 ## 开发
 
 ```bash
-npm install
-npm run dev
-npm run build
+pnpm install
+pnpm run dev
+pnpm run build
 ```
 
-本项目当前不维护自动化测试。提交前请运行 `npm run build`。
+本项目只使用 pnpm 作为包管理器。不要提交 `package-lock.json` 或 `yarn.lock`。
+
+本项目当前不维护自动化测试。提交前请运行 `pnpm run build`。
 
 ## PR 检查清单
 
@@ -59,7 +64,7 @@ npm run build
 - 不要提交 API key、token、私有 URL、内部主机名或个人本地 catalog 文件。
 - 只属于个人的工具放到 `src/config/toolCatalog.local.ts`。
 - catalog 的名称和描述需要同时提供中英文。
-- 提交 PR 前运行 `npm run build`。
+- 提交 PR 前运行 `pnpm run build`。
 - UI 文案保持简洁，优先服务实际操作。
 
 ## 添加工具

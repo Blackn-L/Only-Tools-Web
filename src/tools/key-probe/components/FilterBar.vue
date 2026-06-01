@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NButton } from 'naive-ui'
+import { ArrowDownUp } from '@lucide/vue'
+import { Button } from '@/components/ui/button'
 import type { FilterStatus, SortField } from '../lib/types'
 import { useKeyStore } from '../stores/useKeyStore'
 
@@ -25,57 +26,35 @@ const hasResults = computed(() => store.keyList.some((k) => k.status === 'succes
 </script>
 
 <template>
-  <div v-if="store.keyList.length > 0" class="filter-bar">
-    <div class="filter-bar__group">
-      <n-button
+  <div v-if="store.keyList.length > 0" class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <div class="flex flex-wrap gap-2">
+      <Button
         v-for="filter in filters"
         :key="filter.value"
-        :type="store.filterStatus === filter.value ? 'primary' : 'default'"
-        size="tiny"
-        secondary
+        :variant="store.filterStatus === filter.value ? 'default' : 'outline'"
+        size="sm"
+        :aria-pressed="store.filterStatus === filter.value"
         @click="store.filterStatus = filter.value"
       >
         {{ t(filter.labelKey) }}
-      </n-button>
+      </Button>
     </div>
 
-    <div v-if="hasResults" class="filter-bar__group">
-      <n-button
+    <div v-if="hasResults" class="flex flex-wrap gap-2">
+      <Button
         v-for="sort in sorts"
         :key="sort.value ?? 'default'"
-        :type="store.sortField === sort.value ? 'primary' : 'default'"
-        size="tiny"
-        secondary
+        :variant="store.sortField === sort.value ? 'default' : 'outline'"
+        size="sm"
+        :aria-pressed="store.sortField === sort.value"
         @click="store.setSortField(sort.value)"
       >
         {{ t(sort.labelKey) }}
-      </n-button>
-      <n-button v-if="store.sortField" size="tiny" secondary @click="store.toggleSortDir">
-        {{ store.sortDir === 'asc' ? t('keyTester.filters.asc') : t('keyTester.filters.desc') }}
-      </n-button>
+      </Button>
+      <Button v-if="store.sortField" variant="outline" size="sm" @click="store.toggleSortDir">
+        <ArrowDownUp data-icon="inline-start" />
+        <span>{{ store.sortDir === 'asc' ? t('keyTester.filters.asc') : t('keyTester.filters.desc') }}</span>
+      </Button>
     </div>
   </div>
 </template>
-
-<style scoped>
-.filter-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.filter-bar__group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-@media (max-width: 760px) {
-  .filter-bar {
-    align-items: stretch;
-    flex-direction: column;
-  }
-}
-</style>

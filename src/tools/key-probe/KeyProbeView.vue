@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { NAlert } from 'naive-ui'
+import { ShieldCheck } from '@lucide/vue'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import AddKeyForm from './components/AddKeyForm.vue'
 import ControlBar from './components/ControlBar.vue'
 import StatsBar from './components/StatsBar.vue'
@@ -11,77 +12,30 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <main class="key-probe">
-    <header class="key-probe__header">
-      <p class="eyebrow">{{ t('keyTester.eyebrow') }}</p>
-      <h1>{{ t('keyTester.title') }}</h1>
-      <p>{{ t('keyTester.description') }}</p>
+  <div class="flex flex-col gap-6">
+    <header class="border-b pb-6">
+      <p class="mb-3 text-xs font-semibold uppercase text-primary">{{ t('keyTester.eyebrow') }}</p>
+      <h1 class="text-3xl font-semibold leading-tight tracking-normal sm:text-5xl">
+        {{ t('keyTester.title') }}
+      </h1>
+      <p class="mt-3 max-w-3xl text-muted-foreground">
+        {{ t('keyTester.description') }}
+      </p>
     </header>
 
-    <n-alert class="privacy-note" type="info" :bordered="false">
-      {{ t('keyTester.privacy') }}
-    </n-alert>
+    <Alert>
+      <ShieldCheck />
+      <AlertDescription>{{ t('keyTester.privacy') }}</AlertDescription>
+    </Alert>
 
-    <section class="tool-surface">
-      <AddKeyForm />
-      <ControlBar />
-      <StatsBar />
-      <FilterBar />
-      <KeyTable />
+    <section class="rounded-md border bg-card p-4 sm:p-6">
+      <div class="flex flex-col gap-5">
+        <AddKeyForm />
+        <ControlBar />
+        <StatsBar />
+        <FilterBar />
+        <KeyTable />
+      </div>
     </section>
-  </main>
+  </div>
 </template>
-
-<style scoped>
-.key-probe {
-  max-width: 1180px;
-  margin: 0 auto;
-}
-
-.key-probe__header {
-  padding-bottom: 22px;
-  border-bottom: 1px solid #e3e6ea;
-}
-
-.eyebrow {
-  margin: 0 0 10px;
-  color: #1f7a5a;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-
-h1,
-p {
-  margin: 0;
-}
-
-h1 {
-  font-size: clamp(30px, 4vw, 48px);
-  line-height: 1.05;
-}
-
-.key-probe__header p:last-child {
-  max-width: 680px;
-  margin-top: 12px;
-  color: #626973;
-}
-
-.privacy-note {
-  margin: 22px 0;
-}
-
-.tool-surface {
-  padding: 24px;
-  border: 1px solid #e3e6ea;
-  border-radius: 8px;
-  background: #ffffff;
-}
-
-@media (max-width: 720px) {
-  .tool-surface {
-    padding: 16px;
-  }
-}
-</style>

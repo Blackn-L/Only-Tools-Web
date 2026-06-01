@@ -1,17 +1,27 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NButton, NInput, useMessage } from 'naive-ui'
+import { Plus } from '@lucide/vue'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { useKeyStore } from '../stores/useKeyStore'
 
 const store = useKeyStore()
-const message = useMessage()
 const { t } = useI18n()
 
 const key = ref('')
 const note = ref('')
 const baseUrl = ref('')
 const model = ref('')
+const feedback = ref('')
+
+function setFeedback(message: string) {
+  feedback.value = message
+}
+
+function clearFeedback() {
+  feedback.value = ''
+}
 
 function handleAdd() {
   const trimmedKey = key.value.trim()
@@ -19,25 +29,26 @@ function handleAdd() {
   const trimmedModel = model.value.trim()
 
   if (!trimmedKey) {
-    message.warning(t('keyTester.warnings.key'))
+    setFeedback(t('keyTester.warnings.key'))
     return
   }
   if (!trimmedBaseUrl) {
-    message.warning(t('keyTester.warnings.baseUrl'))
+    setFeedback(t('keyTester.warnings.baseUrl'))
     return
   }
   if (!trimmedModel) {
-    message.warning(t('keyTester.warnings.model'))
+    setFeedback(t('keyTester.warnings.model'))
     return
   }
   if (store.keyList.some((item) => item.key === trimmedKey && item.baseUrl === trimmedBaseUrl)) {
-    message.error(t('keyTester.warnings.duplicate'))
+    setFeedback(t('keyTester.warnings.duplicate'))
     return
   }
 
   store.addKey(trimmedKey, note.value, trimmedBaseUrl, trimmedModel)
   key.value = ''
   note.value = ''
+  clearFeedback()
 }
 
 function handleKeyDown(e: KeyboardEvent) {
@@ -49,52 +60,41 @@ function handleKeyDown(e: KeyboardEvent) {
 </script>
 
 <template>
-  <form class="add-key-form" @submit.prevent="handleAdd">
-    <n-input
-      v-model:value="key"
-      :placeholder="t('keyTester.apiKey')"
-      type="password"
-      show-password-on="click"
-      @keydown="handleKeyDown"
-    />
-    <n-input
-      v-model:value="baseUrl"
-      :placeholder="t('keyTester.baseUrl')"
-      @keydown="handleKeyDown"
-    />
-    <n-input
-      v-model:value="model"
-      :placeholder="t('keyTester.model')"
-      @keydown="handleKeyDown"
-    />
-    <n-input
-      v-model:value="note"
-      :placeholder="t('keyTester.note')"
-      @keydown="handleKeyDown"
-    />
-    <n-button attr-type="submit" type="primary" :disabled="!key.trim()">
-      {{ t('keyTester.add') }}
-    </n-button>
+  <form class="flex flex-col gap-3" @submit.prevent="handleAdd">
+    <div class="grid gap-3 lg:grid-cols-[minmax(180px,1fr)_minmax(220px,1.2fr)_minmax(160px,0.8fr)_minmax(140px,0.8fr)_auto]">
+      <Input
+        v-model="key"
+        :placeholder="t('keyTester.apiKey')"
+        type="password"
+        autocomplete="off"
+        @input="clearFeedback"
+        @keydown="handleKeyDown"
+      />
+      <Input
+        v-model="baseUrl"
+        :placeholder="t('keyTester.baseUrl')"
+        type="url"
+        @input="clearFeedback"
+        @keydown="handleKeyDown"
+      />
+      <Input
+        v-model="model"
+        :placeholder="t('keyTester.model')"
+        @input="clearFeedback"
+        @keydown="handleKeyDown"
+      />
+      <Input
+        v-model="note"
+        :placeholder="t('keyTester.note')"
+        @keydown="handleKeyDown"
+      />
+      <Button type="submit" :disabled="!key.trim()">
+        <Plus data-icon="inline-start" />
+        <span>{{ t('keyTester.add') }}</span>
+      </Button>
+    </div>
+    <p v-if="feedback" class="text-sm text-destructive" role="alert">
+      {{ feedback }}
+    </p>
   </form>
 </template>
-
-<style scoped>
-.add-key-form {
-  display: grid;
-  grid-template-columns: minmax(180px, 1fr) minmax(220px, 1.2fr) minmax(160px, 0.8fr) minmax(140px, 0.8fr) auto;
-  gap: 10px;
-  margin-bottom: 18px;
-}
-
-@media (max-width: 980px) {
-  .add-key-form {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 640px) {
-  .add-key-form {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
