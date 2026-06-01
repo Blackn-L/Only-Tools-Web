@@ -2,6 +2,13 @@
   "name": "only-tools-web",
   "version": "2.0.0",
   "description": "Open-source personal tool navigator built with Vue 3.",
+  "license": "MIT",
+  "keywords": [
+    "tools",
+    "navigator",
+    "vue",
+    "local-first"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -13,5 +13,3 @@ function isEnabled(tool: ToolItem) {
 
 export const categories = toolCategories
 export const tools = [...publicTools, ...localTools].filter(isEnabled)
-export const internalTools = tools.filter((tool) => tool.kind === 'internal')
-export const externalTools = tools.filter((tool) => tool.kind === 'external')

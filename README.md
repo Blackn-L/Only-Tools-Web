@@ -1,23 +1,25 @@
 # Only Tools Web
 
-Only Tools Web is an open-source, local-first Vue 3 tool navigator. It keeps
-internal utilities and safe public links in one SPA, while leaving private
-personal links in a gitignored local catalog.
+Only Tools Web is an open-source, local-first Vue 3 tool navigator. It groups
+tools by category, supports Simplified Chinese and English, and keeps private
+personal links out of the public repository.
 
-Only Tools Web 是一个开源、本地优先的 Vue 3 工具导航站。它把内置工具和安全公开外链放在同一个 SPA 中，同时把个人私有链接留在被 Git 忽略的本地配置里。
+Only Tools Web 是一个开源、本地优先的 Vue 3 工具导航站。它按类别组织工具，支持简体中文和英文，并把个人私有链接留在公开仓库之外。
 
 ## Features / 功能
 
-- Tool directory with search, category groups, and internal routes.
-- Public catalog for safe links that can be committed to the repository.
-- Local private catalog for personal links that should never be committed.
-- OpenAI-compatible API Key Tester with user-provided Base URL and model.
+- Grouped tool directory with search and internal routes.
+- Built-in OpenAI-compatible API Key Tester.
+- Simplified Chinese and English UI, with Simplified Chinese as the default.
+- Public catalog for safe tools that can be committed.
+- Gitignored local catalog for private personal tools.
 - No backend service and no telemetry.
 
-- 支持搜索、分类、常用工具和内置工具路由的工具导航。
-- 公开 catalog 只放可以提交到仓库的安全链接。
-- 本地私有 catalog 用于个人链接，不应该提交。
-- 通用 OpenAI-compatible API Key Tester，Base URL 和 model 都由用户输入。
+- 按类别分组的工具目录，支持搜索和内置路由。
+- 内置 OpenAI-compatible API Key Tester。
+- 支持简体中文和英文界面，默认简体中文。
+- 公开 catalog 只放可以提交到仓库的安全工具。
+- 被 Git 忽略的本地 catalog 用于个人私有工具。
 - 无后端服务，无遥测。
 
 ## Quick Start / 快速开始
@@ -41,6 +43,21 @@ npm run build
 npm run preview
 ```
 
+## Project Scripts / 项目脚本
+
+- `npm run dev`: start the Vite dev server.
+- `npm run build`: type-check the app and build production assets.
+- `npm run preview`: preview the latest production build.
+
+- `npm run dev`：启动 Vite 开发服务。
+- `npm run build`：执行类型检查并生成生产构建。
+- `npm run preview`：预览最新生产构建。
+
+Automated tests are not configured in this project. Use `npm run build` as the
+required verification command before committing.
+
+本项目当前不配置自动化测试。提交前必须运行 `npm run build` 作为基础验证。
+
 ## Add Public Tools / 添加公开工具
 
 Add safe, non-private tools to `src/config/toolCatalog.public.ts`.
@@ -50,14 +67,25 @@ Add safe, non-private tools to `src/config/toolCatalog.public.ts`.
 ```ts
 {
   id: 'example-tool',
-  name: 'Example Tool',
-  description: 'A safe public tool.',
+  name: {
+    zhCN: '示例工具',
+    enUS: 'Example Tool',
+  },
+  description: {
+    zhCN: '可以安全公开的工具。',
+    enUS: 'A safe public tool.',
+  },
   categoryId: 'productivity',
   tags: ['docs'],
   kind: 'external',
   url: 'https://example.com/',
 }
 ```
+
+Public tools must not include real API keys, private domains, internal service
+names, or personal-only URLs.
+
+公开工具不能包含真实 API key、私有域名、内部服务名称或只属于个人的 URL。
 
 ## Add Private Local Tools / 添加本地私有工具
 
@@ -67,11 +95,6 @@ gitignored on purpose.
 
 把 `src/config/toolCatalog.local.example.ts` 复制为
 `src/config/toolCatalog.local.ts` 后在本机编辑。真实本地 catalog 已被 Git 忽略。
-
-Do not commit private domains, tokens, internal dashboards, or personal service
-URLs.
-
-不要提交私有域名、token、内部看板或个人服务地址。
 
 ## Privacy / 隐私
 

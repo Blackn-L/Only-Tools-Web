@@ -1,7 +1,5 @@
 import type { LocalizedText } from '@/i18n/locales'
 
-export type ToolKind = 'internal' | 'external'
-
 export type ToolCategoryId = 'ai' | 'productivity' | 'local'
 
 export type ToolCategory = {
