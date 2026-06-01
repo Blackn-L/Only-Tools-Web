@@ -16,7 +16,8 @@ export type KeyItem = {
   id: string
   key: string
   note: string
-  baseUrl?: string
+  baseUrl: string
+  model: string
   status: KeyStatus
   latency?: number
   firstTokenLatency?: number

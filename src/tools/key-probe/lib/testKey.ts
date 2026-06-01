@@ -1,14 +1,6 @@
-import type { TestResult, KeyError } from './types'
+import type { KeyError, TestResult } from './types'
 
-const DEFAULT_BASE_URL = 'https://token-plan-cn.xiaomimimo.com'
 const TIMEOUT_MS = 10_000
-
-const BODY = JSON.stringify({
-  model: 'mimo-v2.5-pro',
-  messages: [{ role: 'user', content: 'Reply with one word: hi' }],
-  stream: true,
-  max_tokens: 20,
-})
 
 function classifyError(status?: number, err?: unknown): KeyError {
   if (status === 401) return 'invalid_key'
@@ -19,20 +11,32 @@ function classifyError(status?: number, err?: unknown): KeyError {
   return 'unknown'
 }
 
-export async function testKey(key: string, baseUrl?: string): Promise<TestResult> {
-  const apiUrl = `${(baseUrl || DEFAULT_BASE_URL).replace(/\/+$/, '')}/v1/chat/completions`
+function buildChatCompletionsUrl(baseUrl: string) {
+  return `${baseUrl.replace(/\/+$/, '')}/v1/chat/completions`
+}
+
+function buildBody(model: string) {
+  return JSON.stringify({
+    model,
+    messages: [{ role: 'user', content: 'Reply with one word: hi' }],
+    stream: true,
+    max_tokens: 20,
+  })
+}
+
+export async function testKey(key: string, baseUrl: string, model: string): Promise<TestResult> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
   const startTime = performance.now()
 
   try {
-    const res = await fetch(apiUrl, {
+    const res = await fetch(buildChatCompletionsUrl(baseUrl), {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${key}`,
         'Content-Type': 'application/json',
       },
-      body: BODY,
+      body: buildBody(model),
       signal: controller.signal,
     })
 
@@ -72,7 +76,7 @@ export async function testKey(key: string, baseUrl?: string): Promise<TestResult
 
       buffer += decoder.decode(value, { stream: true })
       const lines = buffer.split('\n')
-      buffer = lines.pop()! // keep incomplete line in buffer
+      buffer = lines.pop() ?? ''
 
       for (const line of lines) {
         if (line.startsWith('data: ') && line !== 'data: [DONE]') {
@@ -81,7 +85,6 @@ export async function testKey(key: string, baseUrl?: string): Promise<TestResult
       }
     }
 
-    // flush remaining buffer
     if (buffer.startsWith('data: ') && buffer !== 'data: [DONE]') {
       tokens++
     }

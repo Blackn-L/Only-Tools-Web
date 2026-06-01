@@ -1,42 +1,73 @@
+import { computed, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
-import { ref, computed, watch } from 'vue'
-import type { KeyItem, FilterStatus, SortField, SortDir } from '@/lib/types'
-import { testKey } from '@/lib/testKey'
-import { batchTest } from '@/lib/batchTest'
+import type { FilterStatus, KeyItem, SortDir, SortField } from '../lib/types'
+import { batchTest } from '../lib/batchTest'
+import { testKey } from '../lib/testKey'
 
-const STORAGE_KEY = 'key-probe-data'
+const STORAGE_KEY = 'only-tools-web:key-tester'
 
-function loadFromStorage(): { keys: KeyItem[]; concurrency: number } {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch {}
-  return { keys: [], concurrency: 5 }
+type StoredState = {
+  keys?: KeyItem[]
+  concurrency?: number
+  rememberKeys?: boolean
 }
 
-function saveToStorage(keys: KeyItem[], concurrency: number) {
-  const data = keys.map(({ id, key, note, baseUrl, status, latency, firstTokenLatency, tokens, error }) => ({
-    id, key, note, baseUrl, status, latency, firstTokenLatency, tokens, error,
-  }))
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ keys: data, concurrency }))
+function loadFromStorage(): StoredState {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
+
+function saveToStorage(keys: KeyItem[], concurrency: number, rememberKeys: boolean) {
+  const safeKeys = rememberKeys
+    ? keys.map(({ id, key, note, baseUrl, model, status, latency, firstTokenLatency, tokens, error }) => ({
+        id,
+        key,
+        note,
+        baseUrl,
+        model,
+        status,
+        latency,
+        firstTokenLatency,
+        tokens,
+        error,
+      }))
+    : []
+
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({
+      keys: safeKeys,
+      concurrency,
+      rememberKeys,
+    }),
+  )
 }
 
 let nextId = 1
 
 export const useKeyStore = defineStore('keys', () => {
   const saved = loadFromStorage()
-  nextId = saved.keys.length > 0 ? Math.max(...saved.keys.map((k) => Number(k.id))) + 1 : 1
+  const rememberKeys = ref(saved.rememberKeys === true)
+  const keyList = ref<KeyItem[]>(rememberKeys.value ? (saved.keys ?? []) : [])
+  nextId = keyList.value.length > 0 ? Math.max(...keyList.value.map((k) => Number(k.id))) + 1 : 1
 
-  const keyList = ref<KeyItem[]>(saved.keys)
-  const concurrency = ref(saved.concurrency)
+  const concurrency = ref(saved.concurrency ?? 5)
   const isRunning = ref(false)
   const filterStatus = ref<FilterStatus>('all')
   const sortField = ref<SortField>(null)
   const sortDir = ref<SortDir>('asc')
 
-  watch([keyList, concurrency], () => {
-    saveToStorage(keyList.value, concurrency.value)
-  }, { deep: true })
+  watch(
+    [keyList, concurrency, rememberKeys],
+    () => {
+      saveToStorage(keyList.value, concurrency.value, rememberKeys.value)
+    },
+    { deep: true },
+  )
 
   const idleKeys = computed(() => keyList.value.filter((k) => k.status === 'idle'))
   const failedKeys = computed(() => keyList.value.filter((k) => k.status === 'error'))
@@ -73,12 +104,13 @@ export const useKeyStore = defineStore('keys', () => {
     return { total, success, error, testing, avgLatency, avgFirstToken }
   })
 
-  function addKey(key: string, note: string, baseUrl?: string) {
+  function addKey(key: string, note: string, baseUrl: string, model: string) {
     keyList.value.push({
       id: String(nextId++),
       key: key.trim(),
       note: note.trim(),
-      baseUrl: baseUrl?.trim() || undefined,
+      baseUrl: baseUrl.trim(),
+      model: model.trim(),
       status: 'idle',
     })
   }
@@ -99,6 +131,7 @@ export const useKeyStore = defineStore('keys', () => {
     filterStatus.value = 'all'
     sortField.value = null
     sortDir.value = 'asc'
+    localStorage.removeItem(STORAGE_KEY)
   }
 
   function setSortField(f: SortField) {
@@ -116,7 +149,7 @@ export const useKeyStore = defineStore('keys', () => {
 
   async function testOne(item: KeyItem) {
     updateKey(item.id, { status: 'testing' })
-    const result = await testKey(item.key, item.baseUrl)
+    const result = await testKey(item.key, item.baseUrl, item.model)
     updateKey(item.id, result)
   }
 
@@ -144,34 +177,26 @@ export const useKeyStore = defineStore('keys', () => {
     })
   }
 
-  function getCCSwitchConfig(key: string, baseUrl?: string): string {
-    const base = (baseUrl || 'https://token-plan-cn.xiaomimimo.com').replace(/\/+$/, '')
-    return JSON.stringify({
-      effortLevel: 'high',
-      env: {
-        ANTHROPIC_AUTH_TOKEN: key,
-        ANTHROPIC_BASE_URL: `${base}/anthropic`,
-        ANTHROPIC_DEFAULT_HAIKU_MODEL: 'mimo-v2.5-pro[1m]',
-        ANTHROPIC_DEFAULT_OPUS_MODEL: 'mimo-v2.5-pro[1m]',
-        ANTHROPIC_DEFAULT_SONNET_MODEL: 'mimo-v2.5-pro[1m]',
-        ANTHROPIC_MODEL: 'mimo-v2.5-pro[1m]',
-      },
-      includeCoAuthoredBy: false,
-      model: 'opus[1m]',
-    }, null, 2)
-  }
-
-  function copyCCSwitchConfig(key: string, baseUrl?: string) {
-    const config = getCCSwitchConfig(key, baseUrl)
-    navigator.clipboard.writeText(config)
-  }
-
   return {
-    keyList, concurrency, isRunning, filterStatus, sortField, sortDir,
-    idleKeys, failedKeys, displayList, stats,
-    addKey, removeKey, updateKey, reset,
-    setSortField, toggleSortDir,
-    testOne, testAll, testFailed,
-    getCCSwitchConfig, copyCCSwitchConfig,
+    keyList,
+    concurrency,
+    rememberKeys,
+    isRunning,
+    filterStatus,
+    sortField,
+    sortDir,
+    idleKeys,
+    failedKeys,
+    displayList,
+    stats,
+    addKey,
+    removeKey,
+    updateKey,
+    reset,
+    setSortField,
+    toggleSortDir,
+    testOne,
+    testAll,
+    testFailed,
   }
 })

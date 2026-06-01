@@ -3,3 +3,9 @@ dist/
 coverage/
 *.local
 *.log
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.workflow/
+src/config/toolCatalog.local.ts
