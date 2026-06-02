@@ -1,21 +1,12 @@
-import type { KeyError, TestResult } from './types'
+import type { TestResult } from './types'
+import {
+  authHeaders,
+  buildEndpointUrl,
+  classifyHttpError,
+  extractApiErrorMessage,
+} from '@/lib/openai'
 
 const TIMEOUT_MS = 10_000
-const PROXY_URL = import.meta.env.VITE_API_PROXY_URL || ''
-
-function classifyError(status?: number, err?: unknown): KeyError {
-  if (status === 401) return 'invalid_key'
-  if (status === 403) return 'forbidden'
-  if (status === 429) return 'rate_limit'
-  if (err instanceof DOMException && err.name === 'AbortError') return 'timeout'
-  if (err instanceof TypeError) return 'network'
-  return 'unknown'
-}
-
-function buildChatCompletionsUrl(baseUrl: string) {
-  const target = `${baseUrl.replace(/\/+$/, '')}/v1/chat/completions`
-  return PROXY_URL ? `${PROXY_URL}${encodeURIComponent(target)}` : target
-}
 
 function buildBody(model: string) {
   return JSON.stringify({
@@ -26,80 +17,93 @@ function buildBody(model: string) {
   })
 }
 
+function isDataLine(line: string) {
+  const trimmed = line.trim()
+  return (
+    trimmed.startsWith('data:') &&
+    trimmed !== 'data: [DONE]' &&
+    trimmed !== 'data:[DONE]'
+  )
+}
+
 export async function testKey(key: string, baseUrl: string, model: string): Promise<TestResult> {
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
+  let timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
+  const resetTimer = () => {
+    clearTimeout(timer)
+    timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
+  }
   const startTime = performance.now()
 
   try {
-    const res = await fetch(buildChatCompletionsUrl(baseUrl), {
+    const res = await fetch(buildEndpointUrl(baseUrl, '/v1/chat/completions'), {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${key}`,
-        'Content-Type': 'application/json',
-      },
+      headers: authHeaders(key),
       body: buildBody(model),
       signal: controller.signal,
     })
 
     if (!res.ok) {
+      const message = await extractApiErrorMessage(res)
       clearTimeout(timer)
       return {
         key,
         status: 'error',
-        error: classifyError(res.status),
+        error: classifyHttpError(res.status),
+        message,
         latency: performance.now() - startTime,
       }
     }
 
     if (!res.body) {
       clearTimeout(timer)
-      return {
-        key,
-        status: 'error',
-        error: 'unknown',
-        latency: performance.now() - startTime,
-      }
+      return { key, status: 'error', error: 'unknown', latency: performance.now() - startTime }
     }
 
     const reader = res.body.getReader()
     const decoder = new TextDecoder()
     let firstTokenTime: number | undefined
-    let tokens = 0
+    let chunks = 0
     let buffer = ''
+    let rawSample = ''
 
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
+      resetTimer()
 
-      if (!firstTokenTime) {
-        firstTokenTime = performance.now()
-      }
+      if (!firstTokenTime) firstTokenTime = performance.now()
 
-      buffer += decoder.decode(value, { stream: true })
+      const text = decoder.decode(value, { stream: true })
+      if (rawSample.length < 4096) rawSample += text
+      buffer += text
       const lines = buffer.split('\n')
       buffer = lines.pop() ?? ''
 
       for (const line of lines) {
-        if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-          tokens++
-        }
+        if (isDataLine(line)) chunks++
       }
     }
 
-    if (buffer.startsWith('data: ') && buffer !== 'data: [DONE]') {
-      tokens++
-    }
+    if (isDataLine(buffer)) chunks++
 
     clearTimeout(timer)
     const endTime = performance.now()
 
-    if (tokens === 0) {
+    // Some gateways ignore stream:true and return a single JSON body instead of
+    // SSE. Treat a valid chat-completion JSON as success rather than "unknown".
+    if (chunks === 0) {
+      if (!/"choices"\s*:/.test(rawSample)) {
+        return { key, status: 'error', error: 'unknown', latency: endTime - startTime }
+      }
       return {
         key,
-        status: 'error',
-        error: 'unknown',
+        status: 'success',
         latency: endTime - startTime,
+        firstTokenLatency: firstTokenTime ? firstTokenTime - startTime : undefined,
+        tokens: 1,
+        message: undefined,
+        error: undefined,
       }
     }
 
@@ -108,7 +112,8 @@ export async function testKey(key: string, baseUrl: string, model: string): Prom
       status: 'success',
       latency: endTime - startTime,
       firstTokenLatency: firstTokenTime ? firstTokenTime - startTime : undefined,
-      tokens,
+      tokens: chunks,
+      message: undefined,
       error: undefined,
     }
   } catch (err) {
@@ -116,7 +121,7 @@ export async function testKey(key: string, baseUrl: string, model: string): Prom
     return {
       key,
       status: 'error',
-      error: classifyError(undefined, err),
+      error: classifyHttpError(undefined, err),
       latency: performance.now() - startTime,
     }
   }

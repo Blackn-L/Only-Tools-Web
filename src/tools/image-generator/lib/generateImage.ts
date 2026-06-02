@@ -1,6 +1,10 @@
 import type { GeneratedImage, GenerateImageInput, ImageGenerationError } from './types'
-
-const PROXY_URL = import.meta.env.VITE_API_PROXY_URL || ''
+import {
+  authHeaders,
+  buildEndpointUrl,
+  classifyHttpError,
+  extractApiErrorMessage,
+} from '@/lib/openai'
 
 type ImageApiItem = {
   url?: string
@@ -13,26 +17,14 @@ type ImageApiResponse = {
 
 export class ImageGenerationRequestError extends Error {
   code: ImageGenerationError
+  detail?: string
 
-  constructor(code: ImageGenerationError) {
-    super(code)
+  constructor(code: ImageGenerationError, detail?: string) {
+    super(detail || code)
     this.name = 'ImageGenerationRequestError'
     this.code = code
+    this.detail = detail
   }
-}
-
-function buildImageUrl(baseUrl: string) {
-  const target = `${baseUrl.replace(/\/+$/, '')}/v1/images/generations`
-  return PROXY_URL ? `${PROXY_URL}${encodeURIComponent(target)}` : target
-}
-
-function classifyError(status?: number, err?: unknown): ImageGenerationError {
-  if (status === 401) return 'invalid_key'
-  if (status === 403) return 'forbidden'
-  if (status === 429) return 'rate_limit'
-  if (err instanceof DOMException && err.name === 'AbortError') return 'timeout'
-  if (err instanceof TypeError) return 'network'
-  return 'unknown'
 }
 
 function toDataUrl(value: string) {
@@ -66,12 +58,9 @@ function toGeneratedImages(payload: ImageApiResponse): GeneratedImage[] {
 
 export async function generateImages(input: GenerateImageInput): Promise<GeneratedImage[]> {
   try {
-    const res = await fetch(buildImageUrl(input.baseUrl), {
+    const res = await fetch(buildEndpointUrl(input.baseUrl, '/v1/images/generations'), {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${input.key}`,
-        'Content-Type': 'application/json',
-      },
+      headers: authHeaders(input.key),
       body: JSON.stringify({
         model: input.model,
         prompt: input.prompt,
@@ -82,7 +71,8 @@ export async function generateImages(input: GenerateImageInput): Promise<Generat
     })
 
     if (!res.ok) {
-      throw new ImageGenerationRequestError(classifyError(res.status))
+      const detail = await extractApiErrorMessage(res)
+      throw new ImageGenerationRequestError(classifyHttpError(res.status), detail)
     }
 
     const payload = (await res.json()) as ImageApiResponse
@@ -97,6 +87,6 @@ export async function generateImages(input: GenerateImageInput): Promise<Generat
     if (err instanceof ImageGenerationRequestError) {
       throw err
     }
-    throw new ImageGenerationRequestError(classifyError(undefined, err))
+    throw new ImageGenerationRequestError(classifyHttpError(undefined, err))
   }
 }
