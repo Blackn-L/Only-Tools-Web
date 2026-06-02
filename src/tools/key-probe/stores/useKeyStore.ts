@@ -5,11 +5,11 @@ import { batchTest } from '../lib/batchTest'
 import { testKey } from '../lib/testKey'
 
 const STORAGE_KEY = 'only-tools-web:key-tester'
+const DEFAULT_CONCURRENCY = 5
 
 type StoredState = {
   keys?: KeyItem[]
   concurrency?: number
-  rememberKeys?: boolean
 }
 
 function loadFromStorage(): StoredState {
@@ -21,28 +21,30 @@ function loadFromStorage(): StoredState {
   }
 }
 
-function saveToStorage(keys: KeyItem[], concurrency: number, rememberKeys: boolean) {
-  const safeKeys = rememberKeys
-    ? keys.map(({ id, key, note, baseUrl, model, status, latency, firstTokenLatency, tokens, error }) => ({
-        id,
-        key,
-        note,
-        baseUrl,
-        model,
-        status,
-        latency,
-        firstTokenLatency,
-        tokens,
-        error,
-      }))
-    : []
+function saveToStorage(keys: KeyItem[], concurrency: number) {
+  if (keys.length === 0 && concurrency === DEFAULT_CONCURRENCY) {
+    localStorage.removeItem(STORAGE_KEY)
+    return
+  }
+
+  const safeKeys = keys.map(({ id, key, note, baseUrl, model, status, latency, firstTokenLatency, tokens, error }) => ({
+    id,
+    key,
+    note,
+    baseUrl,
+    model,
+    status,
+    latency,
+    firstTokenLatency,
+    tokens,
+    error,
+  }))
 
   localStorage.setItem(
     STORAGE_KEY,
     JSON.stringify({
       keys: safeKeys,
       concurrency,
-      rememberKeys,
     }),
   )
 }
@@ -51,22 +53,21 @@ let nextId = 1
 
 export const useKeyStore = defineStore('keys', () => {
   const saved = loadFromStorage()
-  const rememberKeys = ref(saved.rememberKeys === true)
-  const keyList = ref<KeyItem[]>(rememberKeys.value ? (saved.keys ?? []) : [])
+  const keyList = ref<KeyItem[]>(saved.keys ?? [])
   nextId = keyList.value.length > 0 ? Math.max(...keyList.value.map((k) => Number(k.id))) + 1 : 1
 
-  const concurrency = ref(saved.concurrency ?? 5)
+  const concurrency = ref(saved.concurrency ?? DEFAULT_CONCURRENCY)
   const isRunning = ref(false)
   const filterStatus = ref<FilterStatus>('all')
   const sortField = ref<SortField>(null)
   const sortDir = ref<SortDir>('asc')
 
   watch(
-    [keyList, concurrency, rememberKeys],
+    [keyList, concurrency],
     () => {
-      saveToStorage(keyList.value, concurrency.value, rememberKeys.value)
+      saveToStorage(keyList.value, concurrency.value)
     },
-    { deep: true },
+    { deep: true, immediate: true },
   )
 
   const idleKeys = computed(() => keyList.value.filter((k) => k.status === 'idle'))
@@ -127,7 +128,7 @@ export const useKeyStore = defineStore('keys', () => {
   function reset() {
     keyList.value = []
     isRunning.value = false
-    concurrency.value = 5
+    concurrency.value = DEFAULT_CONCURRENCY
     filterStatus.value = 'all'
     sortField.value = null
     sortDir.value = 'asc'
@@ -180,7 +181,6 @@ export const useKeyStore = defineStore('keys', () => {
   return {
     keyList,
     concurrency,
-    rememberKeys,
     isRunning,
     filterStatus,
     sortField,

@@ -6,6 +6,7 @@ import { ArrowRight, ExternalLink, Search } from '@lucide/vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { categories, tools } from '@/config/toolCatalog'
 import { getLocalizedText } from '@/i18n/locales'
 import type { SupportedLocale } from '@/i18n/locales'
@@ -57,29 +58,7 @@ function openTool(tool: ToolItem) {
 </script>
 
 <template>
-  <div class="flex flex-col gap-8">
-    <section class="border-b pb-7" aria-labelledby="home-title">
-      <p class="mb-3 text-xs font-semibold uppercase text-primary">{{ t('home.eyebrow') }}</p>
-      <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <div class="min-w-0">
-          <h1 id="home-title" class="text-4xl font-semibold leading-none tracking-normal sm:text-6xl">
-            {{ t('home.title') }}
-          </h1>
-          <p class="mt-4 max-w-2xl text-base text-muted-foreground">
-            {{ t('home.description') }}
-          </p>
-        </div>
-        <div class="min-w-32 text-left sm:text-right">
-          <strong class="block text-4xl font-semibold leading-none text-primary">
-            {{ totalMatches }}
-          </strong>
-          <span class="mt-1 block text-sm text-muted-foreground">
-            {{ t('home.matchCount', { count: totalMatches }) }}
-          </span>
-        </div>
-      </div>
-    </section>
-
+  <div class="flex flex-col gap-6">
     <section class="flex flex-col gap-3" :aria-label="t('home.search')">
       <div class="relative max-w-xl">
         <Search class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -123,22 +102,31 @@ function openTool(tool: ToolItem) {
               :key="tool.id"
               class="grid gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
             >
-              <button
-                class="flex min-w-0 flex-col gap-2 text-left"
-                type="button"
-                @click="openTool(tool)"
-              >
-                <span class="flex flex-wrap items-center gap-2">
-                  <strong class="text-base font-semibold">{{ label(tool.name) }}</strong>
-                  <Badge variant="outline">
-                    {{ tool.kind === 'external' ? t('home.external') : t('home.internal') }}
-                  </Badge>
-                </span>
-                <span class="text-sm text-muted-foreground">{{ label(tool.description) }}</span>
-                <span class="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                  <span v-for="tag in tool.tags" :key="tag">#{{ tag }}</span>
-                </span>
-              </button>
+              <Tooltip>
+                <TooltipTrigger as-child>
+                  <button
+                    class="flex min-w-0 flex-col gap-2 text-left"
+                    type="button"
+                    @click="openTool(tool)"
+                  >
+                    <span class="flex flex-wrap items-center gap-2">
+                      <strong class="text-base font-semibold">{{ label(tool.name) }}</strong>
+                      <Badge variant="outline">
+                        {{ tool.kind === 'external' ? t('home.external') : t('home.internal') }}
+                      </Badge>
+                    </span>
+                    <span class="block max-w-full truncate text-sm text-muted-foreground">
+                      {{ label(tool.description) }}
+                    </span>
+                    <span class="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                      <span v-for="tag in tool.tags" :key="tag">#{{ tag }}</span>
+                    </span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent align="start" class="max-w-96 leading-relaxed" side="top">
+                  {{ label(tool.description) }}
+                </TooltipContent>
+              </Tooltip>
               <Button variant="outline" size="sm" @click="openTool(tool)">
                 <span>{{ tool.kind === 'external' ? t('home.open') : t('home.launch') }}</span>
                 <ExternalLink v-if="tool.kind === 'external'" data-icon="inline-end" />

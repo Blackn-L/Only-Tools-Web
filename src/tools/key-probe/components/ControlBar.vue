@@ -3,7 +3,6 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RotateCcw, Trash2, Wand2 } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { useKeyStore } from '../stores/useKeyStore'
 
@@ -58,10 +57,6 @@ function handleReset() {
     </div>
 
     <div class="flex flex-wrap items-center gap-4">
-      <label class="flex items-center gap-2 text-sm">
-        <Checkbox v-model="store.rememberKeys" :disabled="store.isRunning" />
-        <span>{{ t('keyTester.actions.remember') }}</span>
-      </label>
       <label class="flex items-center gap-2 text-sm text-muted-foreground">
         <span>{{ t('keyTester.stats.concurrency') }}</span>
         <Input

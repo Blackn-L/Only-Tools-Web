@@ -9,8 +9,8 @@ export const defaultLocale: SupportedLocale = 'zh-CN'
 export const localeStorageKey = 'only-tools-web:locale'
 
 export const localeOptions: { value: SupportedLocale; label: string }[] = [
-  { value: 'zh-CN', label: '简体中文' },
-  { value: 'en-US', label: 'English' },
+  { value: 'zh-CN', label: '中文' },
+  { value: 'en-US', label: 'En' },
 ]
 
 export function isSupportedLocale(locale: string | null): locale is SupportedLocale {

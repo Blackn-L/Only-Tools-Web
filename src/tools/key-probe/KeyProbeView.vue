@@ -13,16 +13,6 @@ const { t } = useI18n()
 
 <template>
   <div class="flex flex-col gap-6">
-    <header class="border-b pb-6">
-      <p class="mb-3 text-xs font-semibold uppercase text-primary">{{ t('keyTester.eyebrow') }}</p>
-      <h1 class="text-3xl font-semibold leading-tight tracking-normal sm:text-5xl">
-        {{ t('keyTester.title') }}
-      </h1>
-      <p class="mt-3 max-w-3xl text-muted-foreground">
-        {{ t('keyTester.description') }}
-      </p>
-    </header>
-
     <Alert>
       <ShieldCheck />
       <AlertDescription>{{ t('keyTester.privacy') }}</AlertDescription>

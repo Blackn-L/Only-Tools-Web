@@ -43,4 +43,19 @@ export const publicTools: ToolItem[] = [
     kind: 'internal',
     path: '/tools/key-probe',
   },
+  {
+    id: 'ai-image-generator',
+    name: {
+      zhCN: 'AI 生图',
+      enUS: 'AI Image Generator',
+    },
+    description: {
+      zhCN: '使用自定义 OpenAI-compatible 图片生成 endpoint 创建图片。',
+      enUS: 'Generate images with a custom OpenAI-compatible image endpoint.',
+    },
+    categoryId: 'ai',
+    tags: ['image', 'ai', 'openai-compatible'],
+    kind: 'internal',
+    path: '/tools/image-generator',
+  },
 ]
