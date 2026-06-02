@@ -1,7 +1,26 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import type { InternalTool } from '@/types/tools'
 import ToolHome from '@/views/ToolHome.vue'
-import KeyProbeView from '@/tools/key-probe/KeyProbeView.vue'
-import ImageGeneratorView from '@/tools/image-generator/ImageGeneratorView.vue'
+import { tools } from '@/config/toolCatalog'
+
+const componentMap: Record<string, () => Promise<unknown>> = {
+  'api-key-tester': () => import('@/tools/key-probe/KeyProbeView.vue'),
+  'ai-image-generator': () => import('@/tools/image-generator/ImageGeneratorView.vue'),
+}
+
+const internalTools = tools.filter(
+  (t): t is InternalTool => t.kind === 'internal' && componentMap[t.id] != null,
+)
+
+const toolRoutes = internalTools.map((t) => ({
+  path: t.path,
+  name: t.id,
+  component: componentMap[t.id],
+  meta: {
+    titleKey: t.titleKey,
+    descriptionKey: t.descriptionKey,
+  },
+}))
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -11,24 +30,7 @@ export const router = createRouter({
       name: 'home',
       component: ToolHome,
     },
-    {
-      path: '/tools/key-probe',
-      name: 'key-probe',
-      component: KeyProbeView,
-      meta: {
-        titleKey: 'keyTester.title',
-        descriptionKey: 'keyTester.description',
-      },
-    },
-    {
-      path: '/tools/image-generator',
-      name: 'image-generator',
-      component: ImageGeneratorView,
-      meta: {
-        titleKey: 'imageGenerator.title',
-        descriptionKey: 'imageGenerator.description',
-      },
-    },
+    ...toolRoutes,
     {
       path: '/:pathMatch(.*)*',
       redirect: '/',

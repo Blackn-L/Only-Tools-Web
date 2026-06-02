@@ -20,6 +20,8 @@ type ToolBase = {
 export type InternalTool = ToolBase & {
   kind: 'internal'
   path: string
+  titleKey: string
+  descriptionKey: string
 }
 
 export type ExternalTool = ToolBase & {

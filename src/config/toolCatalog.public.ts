@@ -42,6 +42,8 @@ export const publicTools: ToolItem[] = [
     tags: ['api', 'key', 'openai-compatible'],
     kind: 'internal',
     path: '/tools/key-probe',
+    titleKey: 'keyTester.title',
+    descriptionKey: 'keyTester.description',
   },
   {
     id: 'ai-image-generator',
@@ -57,5 +59,7 @@ export const publicTools: ToolItem[] = [
     tags: ['image', 'ai', 'openai-compatible'],
     kind: 'internal',
     path: '/tools/image-generator',
+    titleKey: 'imageGenerator.title',
+    descriptionKey: 'imageGenerator.description',
   },
 ]
