@@ -1,12 +1,8 @@
+import type { ApiErrorCode } from '@/lib/openai'
+
 export type KeyStatus = 'idle' | 'testing' | 'success' | 'error'
 
-export type KeyError =
-  | 'invalid_key'
-  | 'forbidden'
-  | 'rate_limit'
-  | 'timeout'
-  | 'network'
-  | 'unknown'
+export type KeyError = ApiErrorCode
 
 export type SortField = 'latency' | 'firstTokenLatency' | null
 export type SortDir = 'asc' | 'desc'
@@ -23,6 +19,7 @@ export type KeyItem = {
   firstTokenLatency?: number
   tokens?: number
   error?: KeyError
+  message?: string
 }
 
 export type TestResult = {
@@ -32,4 +29,5 @@ export type TestResult = {
   firstTokenLatency?: number
   tokens?: number
   error?: KeyError
+  message?: string
 }

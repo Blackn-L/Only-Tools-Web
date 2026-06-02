@@ -1,11 +1,6 @@
-export type ImageGenerationError =
-  | 'missing_field'
-  | 'invalid_key'
-  | 'forbidden'
-  | 'rate_limit'
-  | 'timeout'
-  | 'network'
-  | 'unknown'
+import type { ApiErrorCode } from '@/lib/openai'
+
+export type ImageGenerationError = 'missing_field' | ApiErrorCode
 
 export type ImageGenerationSettings = {
   baseUrl: string
