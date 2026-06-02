@@ -33,7 +33,8 @@ Recommended Vercel settings:
 - Install Command: `pnpm install --frozen-lockfile`
 - Build Command: `pnpm run build`
 - Output Directory: `dist`
-- Environment Variables: none required
+- Environment Variables:
+  - `VITE_API_PROXY_URL` (optional): CORS proxy URL for API requests. See [CORS Proxy](#cors-proxy) below.
 
 The included `vercel.json` rewrites all routes to `index.html`, so direct visits
 to routes like `/tools/key-probe` work correctly.
@@ -82,6 +83,66 @@ For a quick server-side preview:
 
 ```bash
 pnpm dlx sirv-cli dist --single --host 0.0.0.0 --port 4173
+```
+
+## CORS Proxy
+
+The app calls external APIs (e.g. OpenAI-compatible endpoints) directly from the browser. If the target API server does not send `Access-Control-Allow-Origin` headers, browsers block the request.
+
+Set `VITE_API_PROXY_URL` to a CORS proxy that forwards requests. The proxy receives the encoded target URL as a query parameter.
+
+### Cloudflare Worker (Recommended)
+
+Create a [Cloudflare Worker](https://workers.cloudflare.com/) with the following code:
+
+```javascript
+export default {
+  async fetch(request) {
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': '*',
+        },
+      })
+    }
+
+    const url = new URL(request.url)
+    const target = url.searchParams.get('target')
+    if (!target) return new Response('Missing target parameter', { status: 400 })
+
+    const response = await fetch(target, {
+      method: request.method,
+      headers: request.headers,
+      body: request.body,
+    })
+
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: {
+        ...Object.fromEntries(response.headers),
+        'Access-Control-Allow-Origin': '*',
+      },
+    })
+  },
+}
+```
+
+After deployment, set the environment variable:
+
+```
+VITE_API_PROXY_URL=https://your-worker.your-subdomain.workers.dev?target=
+```
+
+### Other Proxies
+
+Any CORS proxy service works. Examples:
+
+```
+VITE_API_PROXY_URL=https://corsproxy.io/?url=
+VITE_API_PROXY_URL=https://api.allorigins.win/raw?url=
 ```
 
 ## Privacy Notes

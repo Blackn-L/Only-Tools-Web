@@ -1,5 +1,7 @@
 import type { GeneratedImage, GenerateImageInput, ImageGenerationError } from './types'
 
+const PROXY_URL = import.meta.env.VITE_API_PROXY_URL || ''
+
 type ImageApiItem = {
   url?: string
   b64_json?: string
@@ -20,7 +22,8 @@ export class ImageGenerationRequestError extends Error {
 }
 
 function buildImageUrl(baseUrl: string) {
-  return `${baseUrl.replace(/\/+$/, '')}/v1/images/generations`
+  const target = `${baseUrl.replace(/\/+$/, '')}/v1/images/generations`
+  return PROXY_URL ? `${PROXY_URL}${encodeURIComponent(target)}` : target
 }
 
 function classifyError(status?: number, err?: unknown): ImageGenerationError {

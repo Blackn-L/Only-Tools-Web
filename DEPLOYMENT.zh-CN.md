@@ -30,7 +30,8 @@ VITE_BASE_PATH=/${repositoryName}/ pnpm run build
 - Install Command：`pnpm install --frozen-lockfile`
 - Build Command：`pnpm run build`
 - Output Directory：`dist`
-- Environment Variables：不需要
+- Environment Variables：
+  - `VITE_API_PROXY_URL`（可选）：用于 API 请求的 CORS 代理地址。详见下方 [CORS 代理](#cors-代理)。
 
 仓库内置的 `vercel.json` 会把所有路由重写到 `index.html`，因此直接访问
 `/tools/key-probe` 等 SPA 路由也能正常工作。
@@ -79,6 +80,66 @@ example.com {
 
 ```bash
 pnpm dlx sirv-cli dist --single --host 0.0.0.0 --port 4173
+```
+
+## CORS 代理
+
+应用直接从浏览器调用外部 API（如 OpenAI 兼容端点）。如果目标 API 服务器未发送 `Access-Control-Allow-Origin` 头，浏览器会阻止请求。
+
+将 `VITE_API_PROXY_URL` 设置为 CORS 代理地址，代理会接收编码后的目标 URL 作为查询参数。
+
+### Cloudflare Worker（推荐）
+
+创建一个 [Cloudflare Worker](https://workers.cloudflare.com/)，使用以下代码：
+
+```javascript
+export default {
+  async fetch(request) {
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': '*',
+        },
+      })
+    }
+
+    const url = new URL(request.url)
+    const target = url.searchParams.get('target')
+    if (!target) return new Response('Missing target parameter', { status: 400 })
+
+    const response = await fetch(target, {
+      method: request.method,
+      headers: request.headers,
+      body: request.body,
+    })
+
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: {
+        ...Object.fromEntries(response.headers),
+        'Access-Control-Allow-Origin': '*',
+      },
+    })
+  },
+}
+```
+
+部署后设置环境变量：
+
+```
+VITE_API_PROXY_URL=https://your-worker.your-subdomain.workers.dev?target=
+```
+
+### 其他代理
+
+任何 CORS 代理服务均可使用。示例：
+
+```
+VITE_API_PROXY_URL=https://corsproxy.io/?url=
+VITE_API_PROXY_URL=https://api.allorigins.win/raw?url=
 ```
 
 ## 隐私注意事项

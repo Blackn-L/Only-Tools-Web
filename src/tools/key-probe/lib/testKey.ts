@@ -1,6 +1,7 @@
 import type { KeyError, TestResult } from './types'
 
 const TIMEOUT_MS = 10_000
+const PROXY_URL = import.meta.env.VITE_API_PROXY_URL || ''
 
 function classifyError(status?: number, err?: unknown): KeyError {
   if (status === 401) return 'invalid_key'
@@ -12,7 +13,8 @@ function classifyError(status?: number, err?: unknown): KeyError {
 }
 
 function buildChatCompletionsUrl(baseUrl: string) {
-  return `${baseUrl.replace(/\/+$/, '')}/v1/chat/completions`
+  const target = `${baseUrl.replace(/\/+$/, '')}/v1/chat/completions`
+  return PROXY_URL ? `${PROXY_URL}${encodeURIComponent(target)}` : target
 }
 
 function buildBody(model: string) {
