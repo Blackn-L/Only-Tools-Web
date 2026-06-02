@@ -15,6 +15,7 @@ Only Tools Web 按本地优先的静态 SPA 设计。
 - 用户可以通过应用中的 Clear 操作清空本地 Key Tester 数据。
 - 用户可以通过应用中的 Clear local data 操作清空本地 AI 生图数据。
 - 当前界面语言会保存到 localStorage，key 为 `only-tools-web:locale`。
+- 当前主题模式会保存到 localStorage，key 为 `only-tools-web:theme`；使用跟随系统模式时不会保存该 key。
 - 私有工具链接应放在 `src/config/toolCatalog.local.ts`，该文件已被 Git 忽略。
 
 不要公开真实 API key、私有服务地址、内部看板链接、敏感 prompt、私有生成图片或个人本地 catalog 文件。

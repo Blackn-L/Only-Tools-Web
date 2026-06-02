@@ -8,11 +8,6 @@ export type LocalizedText = {
 export const defaultLocale: SupportedLocale = 'zh-CN'
 export const localeStorageKey = 'only-tools-web:locale'
 
-export const localeOptions: { value: SupportedLocale; label: string }[] = [
-  { value: 'zh-CN', label: '中文' },
-  { value: 'en-US', label: 'En' },
-]
-
 export function isSupportedLocale(locale: string | null): locale is SupportedLocale {
   return locale === 'zh-CN' || locale === 'en-US'
 }

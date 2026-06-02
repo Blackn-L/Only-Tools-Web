@@ -1,29 +1,26 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { ArrowLeft } from '@lucide/vue'
+import { ArrowLeft, Languages, Monitor, Moon, Sun } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { localeOptions, saveLocale } from '@/i18n/locales'
+import { saveLocale } from '@/i18n/locales'
 import type { SupportedLocale } from '@/i18n/locales'
 
+type ThemeMode = 'system' | 'light' | 'dark'
+
+const themeStorageKey = 'only-tools-web:theme'
 const route = useRoute()
 const router = useRouter()
 const { t, locale } = useI18n()
+const themeMode = ref<ThemeMode>('system')
+let systemThemeQuery: MediaQueryList | null = null
 
 const isHome = computed(() => route.path === '/')
 const activeToolTitle = computed(() => {
@@ -36,16 +33,63 @@ const activeToolDescription = computed(() => {
   const descriptionKey = route.meta.descriptionKey
   return typeof descriptionKey === 'string' ? t(descriptionKey) : ''
 })
-const currentLocale = computed({
-  get: () => locale.value as SupportedLocale,
-  set: (value: SupportedLocale) => {
-    locale.value = value
-    saveLocale(value)
-  },
+const currentLocale = computed(() => locale.value as SupportedLocale)
+const nextLocale = computed<SupportedLocale>(() => (currentLocale.value === 'zh-CN' ? 'en-US' : 'zh-CN'))
+const languageToggleLabel = computed(() => (
+  nextLocale.value === 'zh-CN' ? t('app.switchToChinese') : t('app.switchToEnglish')
+))
+
+function isThemeMode(value: string | null): value is ThemeMode {
+  return value === 'system' || value === 'light' || value === 'dark'
+}
+
+function shouldUseDarkTheme(mode: ThemeMode) {
+  if (mode === 'dark') return true
+  if (mode === 'light') return false
+  return systemThemeQuery?.matches ?? false
+}
+
+function applyTheme(mode: ThemeMode) {
+  const isDark = shouldUseDarkTheme(mode)
+  document.documentElement.classList.toggle('dark', isDark)
+  document.documentElement.style.colorScheme = isDark ? 'dark' : 'light'
+}
+
+function setTheme(mode: ThemeMode) {
+  themeMode.value = mode
+  if (mode === 'system') {
+    localStorage.removeItem(themeStorageKey)
+  } else {
+    localStorage.setItem(themeStorageKey, mode)
+  }
+  applyTheme(mode)
+}
+
+function handleSystemThemeChange() {
+  if (themeMode.value === 'system') {
+    applyTheme('system')
+  }
+}
+
+onMounted(() => {
+  systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)')
+  const savedTheme = localStorage.getItem(themeStorageKey)
+  themeMode.value = isThemeMode(savedTheme) ? savedTheme : 'system'
+  applyTheme(themeMode.value)
+  systemThemeQuery.addEventListener('change', handleSystemThemeChange)
+})
+
+onUnmounted(() => {
+  systemThemeQuery?.removeEventListener('change', handleSystemThemeChange)
 })
 
 function goHome() {
   router.push('/')
+}
+
+function toggleLocale() {
+  locale.value = nextLocale.value
+  saveLocale(nextLocale.value)
 }
 </script>
 
@@ -84,38 +128,96 @@ function goHome() {
           </div>
 
           <div class="flex items-center justify-between gap-3 sm:justify-end">
-            <a
-              aria-label="GitHub: Blackn-L/Only-Tools-Web"
-              class="inline-flex size-8 items-center justify-center rounded-md border border-input bg-background text-foreground no-underline transition-colors hover:bg-accent hover:text-accent-foreground"
-              href="https://github.com/Blackn-L/Only-Tools-Web"
-              rel="noreferrer"
-              target="_blank"
-            >
-              <svg
-                aria-hidden="true"
-                class="size-4"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M12 .5a12 12 0 0 0-3.79 23.39c.6.11.82-.26.82-.58v-2.04c-3.34.73-4.04-1.42-4.04-1.42-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.08 1.85 1.24 1.85 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.4 11.4 0 0 1 6.01 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.49 5.93.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 .5Z" />
-              </svg>
-            </a>
-            <Select v-model="currentLocale">
-              <SelectTrigger class="w-[78px]" size="sm" :aria-label="t('app.language')">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem
-                    v-for="option in localeOptions"
-                    :key="option.value"
-                    :value="option.value"
+            <div class="flex items-center gap-1 rounded-md border border-input bg-background p-1">
+              <Tooltip>
+                <TooltipTrigger as-child>
+                  <Button
+                    :aria-label="t('app.themeSystem')"
+                    :aria-pressed="themeMode === 'system'"
+                    :class="themeMode === 'system' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'"
+                    size="icon-sm"
+                    type="button"
+                    variant="ghost"
+                    @click="setTheme('system')"
                   >
-                    {{ option.label }}
-                  </SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+                    <Monitor />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{{ t('app.themeSystem') }}</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger as-child>
+                  <Button
+                    :aria-label="t('app.themeLight')"
+                    :aria-pressed="themeMode === 'light'"
+                    :class="themeMode === 'light' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'"
+                    size="icon-sm"
+                    type="button"
+                    variant="ghost"
+                    @click="setTheme('light')"
+                  >
+                    <Sun />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{{ t('app.themeLight') }}</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger as-child>
+                  <Button
+                    :aria-label="t('app.themeDark')"
+                    :aria-pressed="themeMode === 'dark'"
+                    :class="themeMode === 'dark' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'"
+                    size="icon-sm"
+                    type="button"
+                    variant="ghost"
+                    @click="setTheme('dark')"
+                  >
+                    <Moon />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{{ t('app.themeDark') }}</TooltipContent>
+              </Tooltip>
+            </div>
+
+            <div class="flex items-center gap-1 rounded-md border border-input bg-background p-1">
+              <Tooltip>
+                <TooltipTrigger as-child>
+                  <Button
+                    :aria-label="t('app.github')"
+                    as="a"
+                    href="https://github.com/Blackn-L/Only-Tools-Web"
+                    rel="noreferrer"
+                    size="icon-sm"
+                    target="_blank"
+                    variant="ghost"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="size-4"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 .5a12 12 0 0 0-3.79 23.39c.6.11.82-.26.82-.58v-2.04c-3.34.73-4.04-1.42-4.04-1.42-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.08 1.85 1.24 1.85 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.4 11.4 0 0 1 6.01 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.49 5.93.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 .5Z" />
+                    </svg>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{{ t('app.github') }}</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger as-child>
+                  <Button
+                    :aria-label="languageToggleLabel"
+                    size="icon-sm"
+                    type="button"
+                    variant="ghost"
+                    @click="toggleLocale"
+                  >
+                    <Languages />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{{ languageToggleLabel }}</TooltipContent>
+              </Tooltip>
+            </div>
           </div>
         </div>
       </header>

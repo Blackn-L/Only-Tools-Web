@@ -4,6 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
+    <script>
+      (() => {
+        const storageKey = 'only-tools-web:theme'
+        let theme = 'system'
+        try {
+          const savedTheme = localStorage.getItem(storageKey)
+          if (savedTheme === 'light' || savedTheme === 'dark') {
+            theme = savedTheme
+          }
+        } catch {}
+
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        const isDark = theme === 'dark' || (theme === 'system' && prefersDark)
+        document.documentElement.classList.toggle('dark', isDark)
+        document.documentElement.style.colorScheme = isDark ? 'dark' : 'light'
+      })()
+    </script>
     <title>Only Tools Web</title>
   </head>
   <body>
