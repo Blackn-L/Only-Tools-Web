@@ -8,9 +8,9 @@
 </p>
 
 <p align="center">
-  <a href="https://only-tools-web.vercel.app/">Online Demo</a>
+  Online Demo : <a href="https://only-tools-web.vercel.app/">Vercel</a>
   ·
-  <a href="https://github.com/Blackn-L/Only-Tools-Web">GitHub</a>
+<a href="https://blackn-l.github.io/Only-Tools-Web/">GitHub Pages</a>
 </p>
 
 <p align="center">
@@ -25,32 +25,32 @@
 
 ## Features
 
-| Module | Capabilities |
-|--------|-------------|
-| **Tool Directory** | Grouped categories, keyword search, internal route navigation. |
-| **API Key Tester** | Send test requests to any custom API endpoint, display response status and latency. |
-| **AI Image Generator** | Text-to-image via custom API endpoint, settings stored in browser localStorage. |
-| **Bilingual UI** | Simplified Chinese and English, switchable at runtime, Chinese as default. |
-| **Public Catalog** | Safe tools committed to the repo at `src/config/toolCatalog.public.ts`. |
-| **Local Catalog** | Private tools in `src/config/toolCatalog.local.ts`, gitignored by design. |
-| **No Backend** | Pure frontend app, zero telemetry, all data stays in the browser. |
+| Module                 | Capabilities                                                                        |
+| ---------------------- | ----------------------------------------------------------------------------------- |
+| **Tool Directory**     | Grouped categories, keyword search, internal route navigation.                      |
+| **API Key Tester**     | Send test requests to any custom API endpoint, display response status and latency. |
+| **AI Image Generator** | Text-to-image via custom API endpoint, settings stored in browser localStorage.     |
+| **Bilingual UI**       | Simplified Chinese and English, switchable at runtime, Chinese as default.          |
+| **Public Catalog**     | Safe tools committed to the repo at `src/config/toolCatalog.public.ts`.             |
+| **Local Catalog**      | Private tools in `src/config/toolCatalog.local.ts`, gitignored by design.           |
+| **No Backend**         | Pure frontend app, zero telemetry, all data stays in the browser.                   |
 
 ## Tech Stack
 
-| Category | Technology | Description |
-|----------|------------|-------------|
-| **Framework** | Vue 3 | Composition API, `<script setup>`, SFC |
-| **Build Tool** | Vite 8 | Lightning-fast HMR, ESBuild-powered |
-| **Package Manager** | pnpm | Content-addressable storage, strict dependency isolation |
-| **Language** | TypeScript 6 | Strict mode, bundler module resolution |
-| **UI Components** | shadcn-vue + Reka UI | Headless, accessible primitives with copy-paste components |
-| **CSS Framework** | Tailwind CSS 4 | Utility-first, Vite-native plugin |
-| **State Management** | Pinia 3 | Type-safe stores, devtools support |
-| **Routing** | Vue Router 5 | History mode, nested routes |
-| **i18n** | Vue I18n 11 | Message functions, locale switching at runtime |
-| **Icons** | Lucide Vue | Consistent SVG icon set |
-| **Utilities** | VueUse 14 | Composables for browser APIs, storage, and more |
-| **Style Helpers** | CVA, clsx, tailwind-merge | Conditional className composition |
+| Category             | Technology                | Description                                                |
+| -------------------- | ------------------------- | ---------------------------------------------------------- |
+| **Framework**        | Vue 3                     | Composition API, `<script setup>`, SFC                     |
+| **Build Tool**       | Vite 8                    | Lightning-fast HMR, ESBuild-powered                        |
+| **Package Manager**  | pnpm                      | Content-addressable storage, strict dependency isolation   |
+| **Language**         | TypeScript 6              | Strict mode, bundler module resolution                     |
+| **UI Components**    | shadcn-vue + Reka UI      | Headless, accessible primitives with copy-paste components |
+| **CSS Framework**    | Tailwind CSS 4            | Utility-first, Vite-native plugin                          |
+| **State Management** | Pinia 3                   | Type-safe stores, devtools support                         |
+| **Routing**          | Vue Router 5              | History mode, nested routes                                |
+| **i18n**             | Vue I18n 11               | Message functions, locale switching at runtime             |
+| **Icons**            | Lucide Vue                | Consistent SVG icon set                                    |
+| **Utilities**        | VueUse 14                 | Composables for browser APIs, storage, and more            |
+| **Style Helpers**    | CVA, clsx, tailwind-merge | Conditional className composition                          |
 
 ## Quick Start
 
@@ -79,11 +79,11 @@ pnpm run preview
 
 ### Scripts
 
-| Command | Description |
-|---------|-------------|
-| `pnpm run dev` | Start Vite dev server with HMR. |
-| `pnpm run build` | Type-check with vue-tsc, then build production assets. |
-| `pnpm run preview` | Preview the production build locally. |
+| Command            | Description                                            |
+| ------------------ | ------------------------------------------------------ |
+| `pnpm run dev`     | Start Vite dev server with HMR.                        |
+| `pnpm run build`   | Type-check with vue-tsc, then build production assets. |
+| `pnpm run preview` | Preview the production build locally.                  |
 
 > Automated tests are not configured. Use `pnpm run build` as the required verification step before committing.
 

@@ -8,9 +8,9 @@
 </p>
 
 <p align="center">
-  <a href="https://only-tools-web.vercel.app/">在线体验</a>
+  在线体验: <a href="https://only-tools-web.vercel.app/">Vercel</a>
   ·
-  <a href="https://github.com/Blackn-L/Only-Tools-Web">GitHub 仓库</a>
+  <a href="https://blackn-l.github.io/Only-Tools-Web/">GitHub Pages</a>
 </p>
 
 <p align="center">
@@ -25,32 +25,32 @@
 
 ## 功能概览
 
-| 模块 | 能力 |
-|------|------|
-| **工具目录** | 按类别分组、关键词搜索、内置路由导航。 |
-| **API Key 测试** | 向任意自定义 API 端点发送测试请求，展示响应状态和延迟。 |
-| **AI 生图** | 通过自定义 API 端点文生图，配置保存在浏览器 localStorage。 |
-| **双语界面** | 支持简体中文和英文，运行时可切换，默认中文。 |
-| **公开 Catalog** | 安全工具提交至仓库，定义在 `src/config/toolCatalog.public.ts`。 |
+| 模块             | 能力                                                              |
+| ---------------- | ----------------------------------------------------------------- |
+| **工具目录**     | 按类别分组、关键词搜索、内置路由导航。                            |
+| **API Key 测试** | 向任意自定义 API 端点发送测试请求，展示响应状态和延迟。           |
+| **AI 生图**      | 通过自定义 API 端点文生图，配置保存在浏览器 localStorage。        |
+| **双语界面**     | 支持简体中文和英文，运行时可切换，默认中文。                      |
+| **公开 Catalog** | 安全工具提交至仓库，定义在 `src/config/toolCatalog.public.ts`。   |
 | **本地 Catalog** | 私有工具定义在 `src/config/toolCatalog.local.ts`，已被 Git 忽略。 |
-| **零后端** | 纯前端应用，无遥测，所有数据留在浏览器本地。 |
+| **零后端**       | 纯前端应用，无遥测，所有数据留在浏览器本地。                      |
 
 ## 技术栈
 
-| 类别 | 技术 | 说明 |
-|------|------|------|
-| **前端框架** | Vue 3 | Composition API、`<script setup>`、SFC 单文件组件 |
-| **构建工具** | Vite 8 | 极速 HMR，基于 ESBuild |
-| **包管理器** | pnpm | 内容寻址存储，严格依赖隔离 |
-| **开发语言** | TypeScript 6 | 严格模式，bundler 模块解析 |
-| **UI 组件库** | shadcn-vue + Reka UI | 无头、可访问的原语组件，复制粘贴式使用 |
-| **CSS 框架** | Tailwind CSS 4 | 实用优先，Vite 原生插件 |
-| **状态管理** | Pinia 3 | 类型安全 Store，支持 DevTools |
-| **路由管理** | Vue Router 5 | History 模式，嵌套路由 |
-| **国际化** | Vue I18n 11 | 消息函数，运行时语言切换 |
-| **图标库** | Lucide Vue | 统一风格 SVG 图标集 |
-| **工具库** | VueUse 14 | 浏览器 API、存储等组合式函数集 |
-| **样式辅助** | CVA、clsx、tailwind-merge | 条件式 className 组合 |
+| 类别          | 技术                      | 说明                                              |
+| ------------- | ------------------------- | ------------------------------------------------- |
+| **前端框架**  | Vue 3                     | Composition API、`<script setup>`、SFC 单文件组件 |
+| **构建工具**  | Vite 8                    | 极速 HMR，基于 ESBuild                            |
+| **包管理器**  | pnpm                      | 内容寻址存储，严格依赖隔离                        |
+| **开发语言**  | TypeScript 6              | 严格模式，bundler 模块解析                        |
+| **UI 组件库** | shadcn-vue + Reka UI      | 无头、可访问的原语组件，复制粘贴式使用            |
+| **CSS 框架**  | Tailwind CSS 4            | 实用优先，Vite 原生插件                           |
+| **状态管理**  | Pinia 3                   | 类型安全 Store，支持 DevTools                     |
+| **路由管理**  | Vue Router 5              | History 模式，嵌套路由                            |
+| **国际化**    | Vue I18n 11               | 消息函数，运行时语言切换                          |
+| **图标库**    | Lucide Vue                | 统一风格 SVG 图标集                               |
+| **工具库**    | VueUse 14                 | 浏览器 API、存储等组合式函数集                    |
+| **样式辅助**  | CVA、clsx、tailwind-merge | 条件式 className 组合                             |
 
 ## 快速开始
 
@@ -79,11 +79,11 @@ pnpm run preview
 
 ### 常用脚本
 
-| 命令 | 说明 |
-|------|------|
-| `pnpm run dev` | 启动 Vite 开发服务器，支持 HMR。 |
-| `pnpm run build` | 使用 vue-tsc 进行类型检查，然后构建生产产物。 |
-| `pnpm run preview` | 在本地预览生产构建。 |
+| 命令               | 说明                                          |
+| ------------------ | --------------------------------------------- |
+| `pnpm run dev`     | 启动 Vite 开发服务器，支持 HMR。              |
+| `pnpm run build`   | 使用 vue-tsc 进行类型检查，然后构建生产产物。 |
+| `pnpm run preview` | 在本地预览生产构建。                          |
 
 > 本项目当前不配置自动化测试。提交前必须运行 `pnpm run build` 作为验证。
 
