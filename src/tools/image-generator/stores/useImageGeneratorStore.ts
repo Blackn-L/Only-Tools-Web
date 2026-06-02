@@ -59,6 +59,7 @@ export const useImageGeneratorStore = defineStore('image-generator', () => {
   const prompt = ref('')
   const images = ref<GeneratedImage[]>([])
   const error = ref<ImageGenerationError | null>(null)
+  const errorMessage = ref<string | null>(null)
   const isGenerating = ref(false)
   const controller = ref<AbortController | null>(null)
   const cancelRequested = ref(false)
@@ -89,7 +90,6 @@ export const useImageGeneratorStore = defineStore('image-generator', () => {
   function validate(): ImageGenerationError | null {
     return canGenerate.value ? null : 'missing_field'
   }
-
   function setCount(value: string | number) {
     count.value = clampCount(Number(value))
   }
@@ -97,6 +97,7 @@ export const useImageGeneratorStore = defineStore('image-generator', () => {
   function clearResults() {
     images.value = []
     error.value = null
+    errorMessage.value = null
   }
 
   function clearLocalData() {
@@ -129,6 +130,7 @@ export const useImageGeneratorStore = defineStore('image-generator', () => {
     cancelRequested.value = false
     isGenerating.value = true
     error.value = null
+    errorMessage.value = null
 
     try {
       images.value = await generateImages({
@@ -142,7 +144,13 @@ export const useImageGeneratorStore = defineStore('image-generator', () => {
       })
     } catch (err) {
       if (!cancelRequested.value) {
-        error.value = err instanceof ImageGenerationRequestError ? err.code : 'unknown'
+        if (err instanceof ImageGenerationRequestError) {
+          error.value = err.code
+          errorMessage.value = err.detail ?? null
+        } else {
+          error.value = 'unknown'
+          errorMessage.value = null
+        }
       }
     } finally {
       window.clearTimeout(timer)
@@ -163,6 +171,7 @@ export const useImageGeneratorStore = defineStore('image-generator', () => {
     prompt,
     images,
     error,
+    errorMessage,
     isGenerating,
     canGenerate,
     setCount,

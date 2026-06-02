@@ -27,7 +27,7 @@ function saveToStorage(keys: KeyItem[], concurrency: number) {
     return
   }
 
-  const safeKeys = keys.map(({ id, key, note, baseUrl, model, status, latency, firstTokenLatency, tokens, error }) => ({
+  const safeKeys = keys.map(({ id, key, note, baseUrl, model, status, latency, firstTokenLatency, tokens, error, message }) => ({
     id,
     key,
     note,
@@ -38,6 +38,7 @@ function saveToStorage(keys: KeyItem[], concurrency: number) {
     firstTokenLatency,
     tokens,
     error,
+    message,
   }))
 
   localStorage.setItem(
@@ -162,6 +163,7 @@ export const useKeyStore = defineStore('keys', () => {
       k.firstTokenLatency = undefined
       k.tokens = undefined
       k.error = undefined
+      k.message = undefined
     })
     isRunning.value = true
     await batchTest(keyList.value, concurrency.value, (id, data) => updateKey(id, data), () => {

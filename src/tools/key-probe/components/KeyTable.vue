@@ -38,8 +38,23 @@ function errorText(error: KeyError) {
 }
 
 async function handleCopyKey(key: string) {
-  await navigator.clipboard.writeText(key)
-  copyMessage.value = t('keyTester.copied')
+  try {
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(key)
+    } else {
+      const ta = document.createElement('textarea')
+      ta.value = key
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    copyMessage.value = t('keyTester.copied')
+  } catch {
+    copyMessage.value = t('keyTester.copyFailed')
+  }
   window.clearTimeout(copyTimer)
   copyTimer = window.setTimeout(() => {
     copyMessage.value = ''
@@ -105,8 +120,19 @@ function handleRemove(item: KeyItem) {
             <TableCell class="text-right font-mono text-sm">{{ formatMs(item.latency) }}</TableCell>
             <TableCell class="text-right font-mono text-sm">{{ formatMs(item.firstTokenLatency) }}</TableCell>
             <TableCell class="text-right font-mono text-sm">{{ item.tokens ?? '-' }}</TableCell>
-            <TableCell class="text-destructive">
-              {{ item.error ? errorText(item.error) : '' }}
+            <TableCell class="max-w-64 text-destructive">
+              <template v-if="item.error">
+                <div class="truncate" :title="item.message || errorText(item.error)">
+                  {{ errorText(item.error) }}
+                </div>
+                <div
+                  v-if="item.message"
+                  class="truncate text-xs text-muted-foreground"
+                  :title="item.message"
+                >
+                  {{ item.message }}
+                </div>
+              </template>
             </TableCell>
             <TableCell>
               <div class="flex justify-end gap-2">

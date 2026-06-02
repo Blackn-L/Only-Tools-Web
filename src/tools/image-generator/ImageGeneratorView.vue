@@ -234,7 +234,12 @@ function clearLocalData() {
           </div>
 
           <Alert v-if="store.error" variant="destructive">
-            <AlertDescription>{{ t(`imageGenerator.errors.${store.error}`) }}</AlertDescription>
+            <AlertDescription>
+              {{ t(`imageGenerator.errors.${store.error}`) }}
+              <span v-if="store.errorMessage" class="mt-1 block break-words text-xs opacity-80">
+                {{ store.errorMessage }}
+              </span>
+            </AlertDescription>
           </Alert>
         </div>
       </form>
