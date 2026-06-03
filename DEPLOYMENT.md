@@ -91,6 +91,12 @@ The app calls external APIs (e.g. OpenAI-compatible endpoints) directly from the
 
 Set `VITE_API_PROXY_URL` to a CORS proxy that forwards requests. The proxy receives the encoded target URL as a query parameter.
 
+**The value must be a complete URL** that starts with `https://` and ends with the query parameter that carries the target (usually `?target=`). A bare host such as `only-tools-web.blackn.workers.dev` is invalid — the app cannot build a valid request URL and the key tester reports "Invalid proxy URL (VITE_API_PROXY_URL)". A reference value you can use directly:
+
+```
+VITE_API_PROXY_URL=https://only-tools-web.blackn.workers.dev?target=
+```
+
 ### Cloudflare Worker (Recommended)
 
 Create a [Cloudflare Worker](https://workers.cloudflare.com/) with the following code:
@@ -130,10 +136,12 @@ export default {
 }
 ```
 
-After deployment, set the environment variable:
+After deployment, set the environment variable (use your own Worker host, or the reference Worker below):
 
 ```
 VITE_API_PROXY_URL=https://your-worker.your-subdomain.workers.dev?target=
+# or the shared reference Worker:
+VITE_API_PROXY_URL=https://only-tools-web.blackn.workers.dev?target=
 ```
 
 ### Other Proxies

@@ -88,6 +88,12 @@ pnpm dlx sirv-cli dist --single --host 0.0.0.0 --port 4173
 
 将 `VITE_API_PROXY_URL` 设置为 CORS 代理地址，代理会接收编码后的目标 URL 作为查询参数。
 
+**该值必须是完整的 URL**：以 `https://` 开头，并以携带目标地址的查询参数结尾（通常是 `?target=`）。像 `only-tools-web.blackn.workers.dev` 这样只填域名是无效的 —— 应用无法拼出合法的请求地址，key 测试会显示「代理地址配置无效 (VITE_API_PROXY_URL)」。可直接参考使用的地址：
+
+```
+VITE_API_PROXY_URL=https://only-tools-web.blackn.workers.dev?target=
+```
+
 ### Cloudflare Worker（推荐）
 
 创建一个 [Cloudflare Worker](https://workers.cloudflare.com/)，使用以下代码：
@@ -127,10 +133,12 @@ export default {
 }
 ```
 
-部署后设置环境变量：
+部署后设置环境变量（使用你自己的 Worker 域名，或下面的参考 Worker）：
 
 ```
 VITE_API_PROXY_URL=https://your-worker.your-subdomain.workers.dev?target=
+# 或使用共享的参考 Worker：
+VITE_API_PROXY_URL=https://only-tools-web.blackn.workers.dev?target=
 ```
 
 ### 其他代理
