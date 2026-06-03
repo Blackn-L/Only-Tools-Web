@@ -48,3 +48,10 @@ export const PROTOCOL_LABELS: Record<ApiProtocol, string> = {
   openai: 'OpenAI',
   anthropic: 'Anthropic',
 }
+
+// Labels for the protocol picker — append the request path so it's clear the
+// endpoint field only needs the base URL (the path is added automatically).
+export const PROTOCOL_OPTION_LABELS: Record<ApiProtocol, string> = {
+  openai: `${PROTOCOL_LABELS.openai} (${PROTOCOL_SPECS.openai.path})`,
+  anthropic: `${PROTOCOL_LABELS.anthropic} (${PROTOCOL_SPECS.anthropic.path})`,
+}

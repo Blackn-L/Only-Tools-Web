@@ -36,7 +36,7 @@ import {
   type CcswitchApp,
 } from '../lib/ccswitch';
 import { formatMs, truncateKey } from '../lib/format';
-import { PROTOCOL_LABELS, PROTOCOL_OPTIONS } from '../lib/protocols';
+import { PROTOCOL_LABELS, PROTOCOL_OPTION_LABELS, PROTOCOL_OPTIONS } from '../lib/protocols';
 import type { ApiProtocol, KeyError, KeyItem, KeyStatus } from '../lib/types';
 import { useKeyStore } from '../stores/useKeyStore';
 
@@ -355,12 +355,12 @@ function confirmImport() {
               <span>{{ t('keyTester.table.protocol') }}</span>
               <Select :model-value="form.protocol" @update:model-value="setEditProtocol">
                 <SelectTrigger class="w-full">
-                  <SelectValue />
+                  <span>{{ PROTOCOL_OPTION_LABELS[form.protocol] }}</span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
                     <SelectItem v-for="p in PROTOCOL_OPTIONS" :key="p" :value="p">
-                      {{ PROTOCOL_LABELS[p] }}
+                      {{ PROTOCOL_OPTION_LABELS[p] }}
                     </SelectItem>
                   </SelectGroup>
                 </SelectContent>

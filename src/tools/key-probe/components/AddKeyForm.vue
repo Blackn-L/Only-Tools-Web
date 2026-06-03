@@ -10,10 +10,9 @@ import {
   SelectGroup,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { PROTOCOL_LABELS, PROTOCOL_OPTIONS } from '../lib/protocols'
+import { PROTOCOL_LABELS, PROTOCOL_OPTION_LABELS, PROTOCOL_OPTIONS } from '../lib/protocols'
 import type { ApiProtocol } from '../lib/types'
 import { useKeyStore } from '../stores/useKeyStore'
 
@@ -153,12 +152,12 @@ function toggleMode() {
         <span>{{ t('keyTester.table.protocol') }}</span>
         <Select :model-value="protocol" @update:model-value="setProtocol">
           <SelectTrigger size="sm" class="w-36">
-            <SelectValue />
+            <span>{{ PROTOCOL_LABELS[protocol] }}</span>
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
               <SelectItem v-for="p in PROTOCOL_OPTIONS" :key="p" :value="p">
-                {{ PROTOCOL_LABELS[p] }}
+                {{ PROTOCOL_OPTION_LABELS[p] }}
               </SelectItem>
             </SelectGroup>
           </SelectContent>
