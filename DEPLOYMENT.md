@@ -104,12 +104,17 @@ Create a [Cloudflare Worker](https://workers.cloudflare.com/) with the following
 ```javascript
 export default {
   async fetch(request) {
+    // CORS preflight: echo the requested headers so custom headers such as
+    // x-api-key, anthropic-version, and Authorization are always allowed
+    // (the "*" wildcard does not cover the Authorization header).
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': '*',
+          'Access-Control-Allow-Headers':
+            request.headers.get('Access-Control-Request-Headers') || '*',
+          'Access-Control-Max-Age': '86400',
         },
       })
     }

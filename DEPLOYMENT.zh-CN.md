@@ -101,12 +101,16 @@ VITE_API_PROXY_URL=https://only-tools-web.blackn.workers.dev?target=
 ```javascript
 export default {
   async fetch(request) {
+    // CORS 预检：回显浏览器请求的头，确保 x-api-key、anthropic-version、
+    // Authorization 等自定义头都被放行（通配符 "*" 不覆盖 Authorization）。
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': '*',
+          'Access-Control-Allow-Headers':
+            request.headers.get('Access-Control-Request-Headers') || '*',
+          'Access-Control-Max-Age': '86400',
         },
       })
     }
