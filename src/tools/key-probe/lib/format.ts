@@ -4,6 +4,6 @@ export function formatMs(ms?: number): string {
 }
 
 export function truncateKey(key: string): string {
-  if (key.length <= 20) return key
-  return `${key.slice(0, 10)}...${key.slice(-7)}`
+  if (key.length <= 16) return key
+  return `${key.slice(0, 8)}...${key.slice(-6)}`
 }

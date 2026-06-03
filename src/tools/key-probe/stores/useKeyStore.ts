@@ -1,6 +1,7 @@
 import { computed, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
-import type { FilterStatus, KeyItem, SortDir, SortField } from '../lib/types'
+import type { ApiProtocol, FilterStatus, KeyItem, SortDir, SortField } from '../lib/types'
+import type { CcswitchApp } from '../lib/ccswitch'
 import { batchTest } from '../lib/batchTest'
 import { testKey } from '../lib/testKey'
 
@@ -10,6 +11,7 @@ const DEFAULT_CONCURRENCY = 5
 type StoredState = {
   keys?: KeyItem[]
   concurrency?: number
+  ccswitchApp?: CcswitchApp
 }
 
 function loadFromStorage(): StoredState {
@@ -21,18 +23,19 @@ function loadFromStorage(): StoredState {
   }
 }
 
-function saveToStorage(keys: KeyItem[], concurrency: number) {
-  if (keys.length === 0 && concurrency === DEFAULT_CONCURRENCY) {
+function saveToStorage(keys: KeyItem[], concurrency: number, ccswitchApp: CcswitchApp) {
+  if (keys.length === 0 && concurrency === DEFAULT_CONCURRENCY && ccswitchApp === 'claude') {
     localStorage.removeItem(STORAGE_KEY)
     return
   }
 
-  const safeKeys = keys.map(({ id, key, note, baseUrl, model, status, latency, firstTokenLatency, tokens, error, message }) => ({
+  const safeKeys = keys.map(({ id, key, note, baseUrl, model, protocol, status, latency, firstTokenLatency, tokens, error, message }) => ({
     id,
     key,
     note,
     baseUrl,
     model,
+    protocol,
     status,
     latency,
     firstTokenLatency,
@@ -46,6 +49,7 @@ function saveToStorage(keys: KeyItem[], concurrency: number) {
     JSON.stringify({
       keys: safeKeys,
       concurrency,
+      ccswitchApp,
     }),
   )
 }
@@ -54,19 +58,22 @@ let nextId = 1
 
 export const useKeyStore = defineStore('keys', () => {
   const saved = loadFromStorage()
-  const keyList = ref<KeyItem[]>(saved.keys ?? [])
+  const keyList = ref<KeyItem[]>(
+    (saved.keys ?? []).map((k) => ({ ...k, protocol: k.protocol ?? 'openai' })),
+  )
   nextId = keyList.value.length > 0 ? Math.max(...keyList.value.map((k) => Number(k.id))) + 1 : 1
 
   const concurrency = ref(saved.concurrency ?? DEFAULT_CONCURRENCY)
+  const ccswitchApp = ref<CcswitchApp>(saved.ccswitchApp === 'codex' ? 'codex' : 'claude')
   const isRunning = ref(false)
   const filterStatus = ref<FilterStatus>('all')
   const sortField = ref<SortField>(null)
   const sortDir = ref<SortDir>('asc')
 
   watch(
-    [keyList, concurrency],
+    [keyList, concurrency, ccswitchApp],
     () => {
-      saveToStorage(keyList.value, concurrency.value)
+      saveToStorage(keyList.value, concurrency.value, ccswitchApp.value)
     },
     { deep: true, immediate: true },
   )
@@ -106,13 +113,14 @@ export const useKeyStore = defineStore('keys', () => {
     return { total, success, error, testing, avgLatency, avgFirstToken }
   })
 
-  function addKey(key: string, note: string, baseUrl: string, model: string) {
+  function addKey(key: string, note: string, baseUrl: string, model: string, protocol: ApiProtocol) {
     keyList.value.push({
       id: String(nextId++),
       key: key.trim(),
       note: note.trim(),
       baseUrl: baseUrl.trim(),
       model: model.trim(),
+      protocol,
       status: 'idle',
     })
   }
@@ -130,6 +138,7 @@ export const useKeyStore = defineStore('keys', () => {
     keyList.value = []
     isRunning.value = false
     concurrency.value = DEFAULT_CONCURRENCY
+    ccswitchApp.value = 'claude'
     filterStatus.value = 'all'
     sortField.value = null
     sortDir.value = 'asc'
@@ -151,7 +160,7 @@ export const useKeyStore = defineStore('keys', () => {
 
   async function testOne(item: KeyItem) {
     updateKey(item.id, { status: 'testing' })
-    const result = await testKey(item.key, item.baseUrl, item.model)
+    const result = await testKey(item.key, item.baseUrl, item.model, item.protocol)
     updateKey(item.id, result)
   }
 
@@ -183,6 +192,7 @@ export const useKeyStore = defineStore('keys', () => {
   return {
     keyList,
     concurrency,
+    ccswitchApp,
     isRunning,
     filterStatus,
     sortField,

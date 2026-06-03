@@ -4,7 +4,17 @@ import { useI18n } from 'vue-i18n'
 import { ListPlus, Plus, X } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { PROTOCOL_LABELS, PROTOCOL_OPTIONS } from '../lib/protocols'
+import type { ApiProtocol } from '../lib/types'
 import { useKeyStore } from '../stores/useKeyStore'
 
 const store = useKeyStore()
@@ -14,9 +24,20 @@ const key = ref('')
 const note = ref('')
 const baseUrl = ref('')
 const model = ref('')
+const protocol = ref<ApiProtocol>('openai')
 const feedback = ref('')
 const batchMode = ref(false)
 const batchText = ref('')
+
+const baseUrlPlaceholder = computed(() =>
+  t(protocol.value === 'anthropic' ? 'keyTester.baseUrlAnthropic' : 'keyTester.baseUrlOpenai'),
+)
+
+function setProtocol(value: unknown) {
+  if (value === 'openai' || value === 'anthropic') {
+    protocol.value = value
+  }
+}
 
 function setFeedback(message: string) {
   feedback.value = message
@@ -48,7 +69,7 @@ function handleAdd() {
     return
   }
 
-  store.addKey(trimmedKey, note.value, trimmedBaseUrl, trimmedModel)
+  store.addKey(trimmedKey, note.value, trimmedBaseUrl, trimmedModel, protocol.value)
   key.value = ''
   note.value = ''
   clearFeedback()
@@ -107,7 +128,7 @@ function handleBatchAdd() {
   for (const entry of entries) {
     if (!entry.key || !entry.baseUrl || !entry.model) continue
     if (store.keyList.some((item) => item.key === entry.key && item.baseUrl === entry.baseUrl)) continue
-    store.addKey(entry.key, entry.note, entry.baseUrl, entry.model)
+    store.addKey(entry.key, entry.note, entry.baseUrl, entry.model, protocol.value)
     added++
   }
 
@@ -127,7 +148,22 @@ function toggleMode() {
 
 <template>
   <div class="flex flex-col gap-3">
-    <div class="flex items-center justify-end">
+    <div class="flex items-center justify-between gap-3">
+      <label class="flex items-center gap-2 text-sm text-muted-foreground">
+        <span>{{ t('keyTester.table.protocol') }}</span>
+        <Select :model-value="protocol" @update:model-value="setProtocol">
+          <SelectTrigger size="sm" class="w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem v-for="p in PROTOCOL_OPTIONS" :key="p" :value="p">
+                {{ PROTOCOL_LABELS[p] }}
+              </SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </label>
       <Button variant="ghost" size="sm" @click="toggleMode">
         <component :is="batchMode ? X : ListPlus" data-icon="inline-start" />
         <span>{{ batchMode ? t('keyTester.batch.single') : t('keyTester.batch.toggle') }}</span>
@@ -146,7 +182,7 @@ function toggleMode() {
         />
         <Input
           v-model="baseUrl"
-          :placeholder="t('keyTester.baseUrl')"
+          :placeholder="baseUrlPlaceholder"
           type="url"
           @input="clearFeedback"
           @keydown="handleKeyDown"
@@ -173,7 +209,7 @@ function toggleMode() {
       <div class="grid gap-3 lg:grid-cols-2">
         <Input
           v-model="baseUrl"
-          :placeholder="t('keyTester.baseUrl')"
+          :placeholder="baseUrlPlaceholder"
           type="url"
         />
         <Input

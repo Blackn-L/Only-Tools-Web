@@ -13,7 +13,7 @@ export async function batchTest(
   const tasks = items.map((item) =>
     limiter(async () => {
       onUpdate(item.id, { status: 'testing' })
-      const result = await testKey(item.key, item.baseUrl, item.model)
+      const result = await testKey(item.key, item.baseUrl, item.model, item.protocol)
       onUpdate(item.id, result)
       return result
     }),
