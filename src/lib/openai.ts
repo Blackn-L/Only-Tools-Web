@@ -1,4 +1,8 @@
-const PROXY_URL = import.meta.env.VITE_API_PROXY_URL || ''
+// In dev, fall back to the built-in Vite proxy (see vite.config.ts) so requests
+// to CORS-less endpoints work with zero configuration. In production set
+// VITE_API_PROXY_URL to a CORS proxy (e.g. a Cloudflare Worker).
+const PROXY_URL =
+  import.meta.env.VITE_API_PROXY_URL || (import.meta.env.DEV ? '/__api_proxy?target=' : '')
 
 export type ApiErrorCode =
   | 'invalid_key'
