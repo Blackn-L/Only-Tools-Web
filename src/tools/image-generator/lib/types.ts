@@ -2,12 +2,15 @@ import type { ApiErrorCode } from '@/lib/openai'
 
 export type ImageGenerationError = 'missing_field' | ApiErrorCode
 
+export type ImageApiMode = 'images' | 'chat'
+
 export type ImageGenerationSettings = {
   baseUrl: string
   key: string
   model: string
   size: string
   count: number
+  apiMode: ImageApiMode
 }
 
 export type GeneratedImage = {
@@ -24,5 +27,6 @@ export type GenerateImageInput = {
   prompt: string
   size: string
   count: number
+  apiMode: ImageApiMode
   signal: AbortSignal
 }

@@ -1,7 +1,12 @@
 import { computed, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { generateImages, ImageGenerationRequestError } from '../lib/generateImage'
-import type { GeneratedImage, ImageGenerationError, ImageGenerationSettings } from '../lib/types'
+import type {
+  GeneratedImage,
+  ImageApiMode,
+  ImageGenerationError,
+  ImageGenerationSettings,
+} from '../lib/types'
 
 const STORAGE_KEY = 'only-tools-web:image-generator'
 const TIMEOUT_MS = 120_000
@@ -25,7 +30,8 @@ function saveToStorage(settings: ImageGenerationSettings) {
     settings.key.trim() ||
     settings.model.trim() ||
     settings.size !== DEFAULT_SIZE ||
-    settings.count !== DEFAULT_COUNT
+    settings.count !== DEFAULT_COUNT ||
+    settings.apiMode !== 'images'
 
   if (!hasLocalConfig) {
     localStorage.removeItem(STORAGE_KEY)
@@ -40,6 +46,7 @@ function saveToStorage(settings: ImageGenerationSettings) {
       model: settings.model,
       size: settings.size,
       count: settings.count,
+      apiMode: settings.apiMode,
     }),
   )
 }
@@ -56,6 +63,7 @@ export const useImageGeneratorStore = defineStore('image-generator', () => {
   const model = ref(saved.model ?? '')
   const size = ref(saved.size ?? DEFAULT_SIZE)
   const count = ref(clampCount(saved.count ?? DEFAULT_COUNT))
+  const apiMode = ref<ImageApiMode>(saved.apiMode === 'chat' ? 'chat' : 'images')
   const prompt = ref('')
   const images = ref<GeneratedImage[]>([])
   const error = ref<ImageGenerationError | null>(null)
@@ -74,7 +82,7 @@ export const useImageGeneratorStore = defineStore('image-generator', () => {
   )
 
   watch(
-    [baseUrl, key, model, size, count],
+    [baseUrl, key, model, size, count, apiMode],
     () => {
       saveToStorage({
         baseUrl: baseUrl.value,
@@ -82,6 +90,7 @@ export const useImageGeneratorStore = defineStore('image-generator', () => {
         model: model.value,
         size: size.value,
         count: count.value,
+        apiMode: apiMode.value,
       })
     },
     { deep: true, immediate: true },
@@ -107,6 +116,7 @@ export const useImageGeneratorStore = defineStore('image-generator', () => {
     model.value = ''
     size.value = DEFAULT_SIZE
     count.value = DEFAULT_COUNT
+    apiMode.value = 'images'
     prompt.value = ''
     clearResults()
   }
@@ -140,6 +150,7 @@ export const useImageGeneratorStore = defineStore('image-generator', () => {
         prompt: prompt.value.trim(),
         size: size.value.trim(),
         count: count.value,
+        apiMode: apiMode.value,
         signal: activeController.signal,
       })
     } catch (err) {
@@ -168,6 +179,7 @@ export const useImageGeneratorStore = defineStore('image-generator', () => {
     model,
     size,
     count,
+    apiMode,
     prompt,
     images,
     error,

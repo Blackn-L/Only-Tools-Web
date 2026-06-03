@@ -86,6 +86,12 @@ function clearLocalData() {
     store.clearLocalData()
   }
 }
+
+function setApiMode(value: unknown) {
+  if (value === 'images' || value === 'chat') {
+    store.apiMode = value
+  }
+}
 </script>
 
 <template>
@@ -109,6 +115,24 @@ function clearLocalData() {
               <ShieldCheck />
               <AlertDescription>{{ t('imageGenerator.privacy') }}</AlertDescription>
             </Alert>
+
+            <label class="flex flex-col gap-2 text-sm font-medium" for="image-api-mode">
+              <span>{{ t('imageGenerator.apiMode') }}</span>
+              <Select :model-value="store.apiMode" @update:model-value="setApiMode">
+                <SelectTrigger id="image-api-mode" class="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="images">{{ t('imageGenerator.apiModeImages') }}</SelectItem>
+                    <SelectItem value="chat">{{ t('imageGenerator.apiModeChat') }}</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <span class="text-xs font-normal text-muted-foreground">
+                {{ t('imageGenerator.apiModeHint') }}
+              </span>
+            </label>
 
             <div class="grid gap-4 md:grid-cols-2">
               <label class="flex flex-col gap-2 text-sm font-medium" for="image-base-url">
@@ -135,7 +159,10 @@ function clearLocalData() {
               </label>
             </div>
 
-            <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_150px_120px]">
+            <div
+              class="grid gap-4"
+              :class="store.apiMode === 'images' ? 'md:grid-cols-[minmax(0,1fr)_150px_120px]' : ''"
+            >
               <label class="flex flex-col gap-2 text-sm font-medium" for="image-model">
                 <span>{{ t('imageGenerator.model') }}</span>
                 <Input
@@ -146,32 +173,34 @@ function clearLocalData() {
                 />
               </label>
 
-              <label class="flex flex-col gap-2 text-sm font-medium" for="image-size">
-                <span>{{ t('imageGenerator.size') }}</span>
-                <Select v-model="store.size">
-                  <SelectTrigger id="image-size" class="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem v-for="option in sizeOptions" :key="option" :value="option">
-                        {{ option }}
-                      </SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </label>
+              <template v-if="store.apiMode === 'images'">
+                <label class="flex flex-col gap-2 text-sm font-medium" for="image-size">
+                  <span>{{ t('imageGenerator.size') }}</span>
+                  <Select v-model="store.size">
+                    <SelectTrigger id="image-size" class="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem v-for="option in sizeOptions" :key="option" :value="option">
+                          {{ option }}
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </label>
 
-              <label class="flex flex-col gap-2 text-sm font-medium" for="image-count">
-                <span>{{ t('imageGenerator.count') }}</span>
-                <Input
-                  id="image-count"
-                  v-model="countModel"
-                  type="number"
-                  min="1"
-                  max="4"
-                />
-              </label>
+                <label class="flex flex-col gap-2 text-sm font-medium" for="image-count">
+                  <span>{{ t('imageGenerator.count') }}</span>
+                  <Input
+                    id="image-count"
+                    v-model="countModel"
+                    type="number"
+                    min="1"
+                    max="4"
+                  />
+                </label>
+              </template>
             </div>
           </div>
 
