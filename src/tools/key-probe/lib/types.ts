@@ -4,6 +4,8 @@ export type KeyStatus = 'idle' | 'testing' | 'success' | 'error'
 
 export type KeyError = ApiErrorCode
 
+export type ApiProtocol = 'openai' | 'anthropic'
+
 export type SortField = 'latency' | 'firstTokenLatency' | null
 export type SortDir = 'asc' | 'desc'
 export type FilterStatus = 'all' | 'success' | 'error' | 'testing' | 'idle'
@@ -14,6 +16,7 @@ export type KeyItem = {
   note: string
   baseUrl: string
   model: string
+  protocol: ApiProtocol
   status: KeyStatus
   latency?: number
   firstTokenLatency?: number

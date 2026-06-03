@@ -1,21 +1,12 @@
-import type { TestResult } from './types'
+import type { ApiProtocol, TestResult } from './types'
 import {
-  authHeaders,
   buildEndpointUrl,
   classifyHttpError,
   extractApiErrorMessage,
 } from '@/lib/openai'
+import { PROTOCOL_SPECS } from './protocols'
 
 const TIMEOUT_MS = 10_000
-
-function buildBody(model: string) {
-  return JSON.stringify({
-    model,
-    messages: [{ role: 'user', content: 'Reply with one word: hi' }],
-    stream: true,
-    max_tokens: 20,
-  })
-}
 
 function isDataLine(line: string) {
   const trimmed = line.trim()
@@ -26,7 +17,13 @@ function isDataLine(line: string) {
   )
 }
 
-export async function testKey(key: string, baseUrl: string, model: string): Promise<TestResult> {
+export async function testKey(
+  key: string,
+  baseUrl: string,
+  model: string,
+  protocol: ApiProtocol,
+): Promise<TestResult> {
+  const spec = PROTOCOL_SPECS[protocol]
   const controller = new AbortController()
   let timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
   const resetTimer = () => {
@@ -36,10 +33,10 @@ export async function testKey(key: string, baseUrl: string, model: string): Prom
   const startTime = performance.now()
 
   try {
-    const res = await fetch(buildEndpointUrl(baseUrl, '/v1/chat/completions'), {
+    const res = await fetch(buildEndpointUrl(baseUrl, spec.path), {
       method: 'POST',
-      headers: authHeaders(key),
-      body: buildBody(model),
+      headers: spec.headers(key),
+      body: spec.body(model),
       signal: controller.signal,
     })
 
@@ -91,9 +88,9 @@ export async function testKey(key: string, baseUrl: string, model: string): Prom
     const endTime = performance.now()
 
     // Some gateways ignore stream:true and return a single JSON body instead of
-    // SSE. Treat a valid chat-completion JSON as success rather than "unknown".
+    // SSE. Treat a valid chat/messages JSON as success rather than "unknown".
     if (chunks === 0) {
-      if (!/"choices"\s*:/.test(rawSample)) {
+      if (!spec.successPattern.test(rawSample)) {
         return { key, status: 'error', error: 'unknown', latency: endTime - startTime }
       }
       return {
