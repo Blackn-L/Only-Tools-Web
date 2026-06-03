@@ -129,13 +129,15 @@ export default {
       body: request.body,
     })
 
+    // Use Headers#set (case-insensitive) to overwrite any Access-Control-Allow-Origin
+    // the target already returned, instead of appending a second one (which the
+    // browser rejects as an invalid "*, *" value).
+    const headers = new Headers(response.headers)
+    headers.set('Access-Control-Allow-Origin', '*')
     return new Response(response.body, {
       status: response.status,
       statusText: response.statusText,
-      headers: {
-        ...Object.fromEntries(response.headers),
-        'Access-Control-Allow-Origin': '*',
-      },
+      headers,
     })
   },
 }

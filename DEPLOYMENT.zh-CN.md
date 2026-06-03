@@ -125,13 +125,14 @@ export default {
       body: request.body,
     })
 
+    // 用 Headers#set（大小写不敏感）覆盖目标已返回的 Access-Control-Allow-Origin，
+    // 而不是再追加一个，否则浏览器会因非法的 "*, *" 值而拒绝。
+    const headers = new Headers(response.headers)
+    headers.set('Access-Control-Allow-Origin', '*')
     return new Response(response.body, {
       status: response.status,
       statusText: response.statusText,
-      headers: {
-        ...Object.fromEntries(response.headers),
-        'Access-Control-Allow-Origin': '*',
-      },
+      headers,
     })
   },
 }
