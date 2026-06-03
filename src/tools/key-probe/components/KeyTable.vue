@@ -211,7 +211,6 @@ function confirmImport() {
             <TableHead>{{ t('keyTester.table.modelStatus') }}</TableHead>
             <TableHead>{{ t('keyTester.table.metrics') }}</TableHead>
             <TableHead>{{ t('keyTester.table.note') }}</TableHead>
-            <TableHead>{{ t('keyTester.table.error') }}</TableHead>
             <TableHead>{{ t('keyTester.table.actions') }}</TableHead>
           </TableRow>
         </TableHeader>
@@ -227,7 +226,7 @@ function confirmImport() {
                   :title="t('keyTester.table.copyKey')"
                   @click="handleCopy(item.key, t('keyTester.table.key'))"
                 >
-                  <Clipboard class="shrink-0" />
+                  <!-- <Clipboard class="shrink-0" /> -->
                   <span class="truncate">{{ truncateKey(item.key) }}</span>
                 </button>
                 <button
@@ -241,21 +240,31 @@ function confirmImport() {
               </div>
             </TableCell>
 
-            <TableCell class="max-w-40 align-top">
+            <TableCell class="max-w-64 align-top">
               <div class="flex flex-col gap-1">
-                <button
-                  class="block max-w-full truncate text-left font-mono text-sm underline-offset-4 hover:underline"
-                  type="button"
-                  :title="item.model"
-                  @click="handleCopy(item.model, t('keyTester.table.model'))"
-                >
-                  {{ item.model }}
-                </button>
-                <div class="flex flex-wrap items-center gap-1.5">
-                  <Badge variant="secondary">{{ PROTOCOL_LABELS[item.protocol] }}</Badge>
-                  <Badge :variant="statusVariant[item.status]">{{
+                <div class="flex items-center gap-2">
+                  <button
+                    class="min-w-0 truncate text-left font-mono text-sm underline-offset-4 hover:underline"
+                    type="button"
+                    :title="item.model"
+                    @click="handleCopy(item.model, t('keyTester.table.model'))"
+                  >
+                    {{ item.model }}
+                  </button>
+                  <Badge variant="secondary" class="shrink-0">{{
+                    PROTOCOL_LABELS[item.protocol]
+                  }}</Badge>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <Badge :variant="statusVariant[item.status]" class="shrink-0">{{
                     statusLabel(item.status)
                   }}</Badge>
+                  <span
+                    v-if="item.error"
+                    class="min-w-0 truncate text-xs text-destructive"
+                    :title="errorTitle(item)"
+                    >{{ errorText(item.error) }}</span
+                  >
                 </div>
               </div>
             </TableCell>
@@ -276,12 +285,6 @@ function confirmImport() {
               :title="item.note || '-'"
             >
               {{ item.note || '-' }}
-            </TableCell>
-
-            <TableCell class="max-w-48 align-top text-destructive">
-              <div v-if="item.error" class="truncate" :title="errorTitle(item)">
-                {{ errorText(item.error) }}
-              </div>
             </TableCell>
 
             <TableCell class="align-top">
