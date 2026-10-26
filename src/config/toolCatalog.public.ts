@@ -62,4 +62,19 @@ export const publicTools: ToolItem[] = [
     titleKey: 'imageGenerator.title',
     descriptionKey: 'imageGenerator.description',
   },
+  {
+    id: 'agent-qa',
+    name: {
+      zhCN: 'agent-qa',
+      enUS: 'agent-qa',
+    },
+    description: {
+      zhCN: '用自然语言测试 Web、Android 和 iOS 应用，结合持久记忆、经验证的自我改进及 CLI/MCP 接口。',
+      enUS: 'Natural-language testing for web, Android and iOS apps with persistent memory, validated self-improvement and CLI/MCP access.',
+    },
+    categoryId: 'ai',
+    tags: ['qa', 'testing', 'memory', 'mcp'],
+    kind: 'external',
+    url: 'https://vostride.com',
+  },
 ]
